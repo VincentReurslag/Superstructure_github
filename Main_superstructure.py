@@ -4,7 +4,6 @@ Created on Sat Apr  3 15:21:03 2021
 
 @author: Vincent Reurslag
 
-More useful comments here
 """
 import pandas as pd
 from Superstructure_class import Superstructure
@@ -23,4 +22,3 @@ model = Superstructure_model(Superstructure)
 
 Superstructure.get_results(model)
 
-'hello'
