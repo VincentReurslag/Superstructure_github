@@ -23,3 +23,4 @@ model = Superstructure_model(Superstructure)
 
 Superstructure.get_results(model)
 
+'hello'
