@@ -112,6 +112,7 @@ class Superstructure:
         
         self.Flow_data = Flow_data
         self.Logic_data = Logic_data
+        self.TEC = model.TEC.value
     
         
         
