@@ -12,16 +12,18 @@ from pyomo.environ import *
 def Superstructure_model(Superstructure):
     model = ConcreteModel()
     
+    #initialize sets
     model.j = Set(initialize = Superstructure.j, doc = 'process stages')
     model.k = Set(initialize = Superstructure.k, doc = 'Technology options')
     model.i = Set(initialize = Superstructure.i, doc = 'Species in reaction mixture')
     
-    
+    #initialize parameters
     model.SF = Param(model.j, model.k, model.i, initialize = Superstructure.SF_data, doc = 'Split factor data for equipment types')
     model.EC = Param(model.j, model.k, initialize = Superstructure.EC_data, doc = 'Cost data for equipment types')
     model.flow0 = Param(model.i, initialize = Superstructure.F0_data, doc = 'Flow coming out of membrane reactor')
     model.M = Param(initialize = 1e5)
     
+    ##initialize variables
     model.flow = Var(model.j, model.k, model.i, bounds = (0.0,None), doc = 'Flow at every equipment for every component')
     model.y = Var(model.j, model.k, domain = Binary, doc = 'Logic variable')
     model.TEC = Var(bounds = (0.0, None), doc = 'Total equipment cost')
@@ -30,6 +32,7 @@ def Superstructure_model(Superstructure):
     model.flowstage = Var(model.j, model.i, bounds = (0.0, None))
     
     def massbalance_rule1(model, j, k, i):
+        """3 massbalance rules for big M implementation"""
         if j >= 2:
             return model.flow[j,k,i] <= model.flowstage[j-1,i] * model.SF[j,k,i] + model.M * (1-model.y[j,k])
         else:
