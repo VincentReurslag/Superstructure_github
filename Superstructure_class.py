@@ -22,20 +22,18 @@ def flatten_dict(d):
     return dict(items())
 
 class Superstructure:
-    def __init__(self, xlsx_file):
+    def __init__(self, xlsx_file,a,j,k):
         """Initializes the superstructure by getting the indices j,k,i,u and corresponding names
         NOTE: Leave the excel tabs empty besides the corresponding tables"""
 
-        df = pd.read_excel(xlsx_file,'Superstructure j,k')
-        j = list(df.iloc[0,2:])
-        k = list(df.iloc[1:,1])
+        df = pd.read_excel(xlsx_file,'Superstructure a,j,k')
         equipment_names = df.iloc[1:, 2:]
         
         
         equipment_names.index = k
-        equipment_names.columns = j
+        equipment_names.columns = pd.MultiIndex.from_product([a,j])
         equipment_names.index.name = 'k'
-        equipment_names.columns.name = 'j'
+        equipment_names.columns.names = ['a','j']
         
         df = pd.read_excel(xlsx_file,'Components i')
         i = list(df.iloc[1:,0])
@@ -48,7 +46,8 @@ class Superstructure:
         utilities_names = df.iloc[1:,1]
         utilities_names.index = u
         utilities_names.index.name = 'u'
-    
+        
+        self.a = a
         self.j = j
         self.k = k
         self.i = i
@@ -58,23 +57,25 @@ class Superstructure:
         self.utilities_names = utilities_names
         
     def get_SF(self,xlsx_file):
-        df = pd.read_excel(xlsx_file, 'SF j,k,i')
+        df = pd.read_excel(xlsx_file, 'SF a,j,k,i')
         SF_data = df.iloc[2:,2:]
-        columns = pd.MultiIndex.from_product([self.j,self.k])
+        columns = pd.MultiIndex.from_product([self.a,self.j,self.k])
         SF_data.columns = columns
         SF_data.index = self.i
-        SF_data.columns.names = ['j','k']
+
+        
+        SF_data.columns.names = ['a','j','k']
         SF_data.index.name = 'i'
         SF_data = SF_data.to_dict()
         SF_data = flatten_dict(SF_data)
         self.SF_data = SF_data
         
     def get_EC(self,xlsx_file):
-        df = pd.read_excel(xlsx_file, 'EC j,k')
+        df = pd.read_excel(xlsx_file, 'EC a,j,k')
         EC_data = df.iloc[1:,2:]
-        EC_data.columns = self.j
+        EC_data.columns = pd.MultiIndex.from_product([self.a,self.j])
         EC_data.index = self.k
-        EC_data.columns.name = 'j'
+        EC_data.columns.names = ['a','j']
         EC_data.index.name = 'k'
         EC_data = EC_data.to_dict()
         EC_data = flatten_dict(EC_data)
