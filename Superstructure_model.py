@@ -71,6 +71,47 @@ def Superstructure_model(Superstructure):
     model.logic = Constraint(model.a, rule = logic_rule, doc = 'One option per stage')
     
     
+    def logic_rule1(model):
+        return sum(model.y[1,1,k] for k in model.k) - sum(model.y[2,1,k] for k in model.k) - sum(model.y[2,2,k] for k in model.k) == 0
+    
+    def logic_rule2(model):
+        return sum(model.y[1,2,k] for k in model.k) - sum(model.y[2,3,k] for k in model.k) - sum(model.y[2,4,k] for k in model.k) == 0
+    
+    def logic_rule3(model):
+        return sum(model.y[2,1,k] for k in model.k) - sum(model.y[3,1,k] for k in model.k) == 0
+    
+    def logic_rule4(model):
+        return sum(model.y[2,2,k] for k in model.k) - sum(model.y[3,2,k] for k in model.k) == 0
+    
+    def logic_rule5(model):
+        return sum(model.y[2,3,k] for k in model.k) - sum(model.y[3,2,k] for k in model.k) == 0
+    
+    def logic_rule6(model):
+        return sum(model.y[2,4,k] for k in model.k) - sum(model.y[3,3,k] for k in model.k) == 0
+    
+    def logic_rule7(model):
+        return sum(model.y[3,1,k] for k in model.k) - sum(model.y[4,1,k] for k in model.k) == 0
+    
+    def logic_rule8(model):
+        return sum(model.y[3,2,k] for k in model.k) - sum(model.y[4,2,k] for k in model.k) == 0
+    
+    def logic_rule9(model):
+        return sum(model.y[3,3,k] for k in model.k) - sum(model.y[4,3,k] for k in model.k) == 0
+    
+
+    
+    model.logic1 = Constraint(rule = logic_rule1)
+    model.logic2 = Constraint(rule = logic_rule2)
+    model.logic3 = Constraint(rule = logic_rule3)
+    model.logic4 = Constraint(rule = logic_rule4)
+    model.logic5 = Constraint(rule = logic_rule5)
+    model.logic6 = Constraint(rule = logic_rule6)
+    model.logic7 = Constraint(rule = logic_rule7)
+    model.logic8 = Constraint(rule = logic_rule8)
+    model.logic9 = Constraint(rule = logic_rule9)
+    
+    
+    
     def BDP_rule(model):
         """Determine how much  biodiesel is produced at the final stage"""
         return model.BDP == model.flow[5,1,1,1]
