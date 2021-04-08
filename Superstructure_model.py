@@ -71,6 +71,7 @@ def Superstructure_model(Superstructure):
     model.logic = Constraint(model.a, rule = logic_rule, doc = 'One option per stage')
     
     
+    """ Logic for which paths are allowed through the superstructure"""
     def logic_rule1(model):
         return sum(model.y[1,1,k] for k in model.k) - sum(model.y[2,1,k] for k in model.k) - sum(model.y[2,2,k] for k in model.k) == 0
     
@@ -98,6 +99,14 @@ def Superstructure_model(Superstructure):
     def logic_rule9(model):
         return sum(model.y[3,3,k] for k in model.k) - sum(model.y[4,3,k] for k in model.k) == 0
     
+    def logic_rule10(model):
+        return sum(model.y[4,2,k] for k in model.k) + sum(model.y[4,3,k] for k in model.k) - model.y[5,1,1] == 0
+    
+    def logic_rule11(model):
+        return sum(model.y[4,1,k] for k in model.k) - model.y[5,1,2] == 0
+    
+
+
 
     
     model.logic1 = Constraint(rule = logic_rule1)
@@ -109,7 +118,9 @@ def Superstructure_model(Superstructure):
     model.logic7 = Constraint(rule = logic_rule7)
     model.logic8 = Constraint(rule = logic_rule8)
     model.logic9 = Constraint(rule = logic_rule9)
-    
+    model.logic10 = Constraint(rule = logic_rule10)
+    model.logic11 = Constraint(rule = logic_rule11)
+
     
     
     def BDP_rule(model):
