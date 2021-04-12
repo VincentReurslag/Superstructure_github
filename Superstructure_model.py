@@ -82,11 +82,9 @@ def Superstructure_model(Superstructure):
         return sum(model.y[2,1,k] for k in model.k) - sum(model.y[3,1,k] for k in model.k) == 0
     
     def logic_rule4(model):
-        return sum(model.y[2,2,k] for k in model.k) - sum(model.y[3,2,k] for k in model.k) == 0
+        return sum(model.y[2,2,k] for k in model.k) + sum(model.y[2,3,k] for k in model.k) - sum(model.y[3,2,k] for k in model.k) == 0
     
-    def logic_rule5(model):
-        return sum(model.y[2,3,k] for k in model.k) - sum(model.y[3,2,k] for k in model.k) == 0
-    
+
     def logic_rule6(model):
         return sum(model.y[2,4,k] for k in model.k) - sum(model.y[3,3,k] for k in model.k) == 0
     
@@ -106,14 +104,10 @@ def Superstructure_model(Superstructure):
         return sum(model.y[4,1,k] for k in model.k) - model.y[5,1,2] == 0
     
 
-
-
-    
     model.logic1 = Constraint(rule = logic_rule1)
     model.logic2 = Constraint(rule = logic_rule2)
     model.logic3 = Constraint(rule = logic_rule3)
     model.logic4 = Constraint(rule = logic_rule4)
-    model.logic5 = Constraint(rule = logic_rule5)
     model.logic6 = Constraint(rule = logic_rule6)
     model.logic7 = Constraint(rule = logic_rule7)
     model.logic8 = Constraint(rule = logic_rule8)
