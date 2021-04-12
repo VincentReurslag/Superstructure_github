@@ -116,7 +116,6 @@ def Superstructure_model(Superstructure):
     model.logic11 = Constraint(rule = logic_rule11)
 
     
-    
     def BDP_rule(model):
         """Determine how much  biodiesel is produced at the final stage"""
         return model.BDP == model.flow[5,1,1,1]
