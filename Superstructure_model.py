@@ -23,15 +23,21 @@ def Superstructure_model(Superstructure):
     model.SF = Param(model.a, model.j, model.k, model.i, initialize = Superstructure.SF_data, doc = 'Split factor data for equipment types')
     model.EC = Param(model.a, model.j, model.k, initialize = Superstructure.EC_data, doc = 'Cost data for equipment types')
     model.flow0 = Param(model.i, initialize = Superstructure.F0_data, doc = 'Flow coming out of membrane reactor')
+    model.N = Param(model.a, model.j, model.k, initialize = Superstructure.Sizing_data)
+    
     model.M = Param(initialize = 1e5)
+    model.lb = Param(initialize = 500)
+    model.ub = Param(initialize = 1000)
     
     ##initialize variables
-    model.flow = Var(model.a, model.j, model.k, model.i, bounds = (0.0,None), doc = 'Flow at every equipment for every component')
+    model.flow = Var(model.a, model.j, model.k, model.i, bounds = (0,None), initialize = 0, doc = 'Flow at every equipment for every component')
     model.y = Var(model.a, model.j, model.k, domain = Binary, doc = 'Logic variable')
-    model.TEC = Var(bounds = (0.0, None), doc = 'Total equipment cost')
-    model.BDP = Var(bounds = (0.0, None), doc = 'Biodiesel production')
-    model.flowtot = Var(model.a, model.j, model.k, bounds = (0.0, None))
-    model.flowstage = Var(model.a, model.i, bounds = (0.0, None))
+    model.TEC = Var(bounds = (0, None), initialize = 0, doc = 'Total equipment cost')
+    model.BDP = Var(bounds = (0, None), initialize = 0, doc = 'Biodiesel production')
+    model.flowtot = Var(model.a, model.j, model.k, bounds = (0, None), initialize = 0)
+    model.flowstage = Var(model.a, model.i, bounds = (0, None), initialize = 0)
+    
+    model.EC1 = Var(model.a,model.i,model.k, bounds = (0, None), initialize = 0)
     
     def massbalance_rule1(model,a, j, k, i):
         """3 massbalance rules for big M implementation:
@@ -128,9 +134,39 @@ def Superstructure_model(Superstructure):
     
     model.flowtot_rule = Constraint(model.a, model.j, model.k, rule = flowtot_rule)
     
+    
+    
+    def EC_rule1(model,a, j, k):
+        """This part of the code deals with economy of scale. The exponential
+            function is linearized over a certain domain to approximate and keep the model
+            as an MILP problem"""
+         
+        slope = (model.ub**model.N[a,j,k] - model.lb**model.N[a,j,k])/(model.ub - model.lb)
+        b = model.lb**model.N[a,j,k] - slope * model.lb 
+        
+        return model.EC1[a,j,k] <= (model.flowtot[a,j,k] * slope + b) + model.M * (1-model.y[a,j,k])
+    
+        
+    def EC_rule2(model, a, j, k):
+        """Simply determining the y = ax + b of the approximation"""
+        slope = (model.ub**model.N[a,j,k] - model.lb**model.N[a,j,k])/(model.ub - model.lb)
+        b = model.lb**model.N[a,j,k] - slope * model.lb 
+        
+        return model.EC1[a,j,k] >= (model.flowtot[a,j,k] * slope + b) - model.M * (1-model.y[a,j,k])
+                        
+                        
+    def EC_rule3(model, a, j, k):
+        return model.EC1[a,j,k] <= model.M * model.y[a,j,k]
+
+    
+    model.EC_rule1 = Constraint(model.a, model.j, model.k, rule = EC_rule1)
+    model.EC_rule2 = Constraint(model.a, model.j, model.k, rule = EC_rule2)
+    model.EC_rule3 = Constraint(model.a, model.j, model.k, rule = EC_rule3)
+    
+    
     def TEC_rule(model):
         """For every k and every j multiply the equipment cost with the total flow and sum it up to determine TEC"""
-        return model.TEC == sum(model.EC[a,j,k] * model.flowtot[a,j,k] for a in model.a for j in model.j for k in model.k)
+        return model.TEC == sum(model.EC[a,j,k] * model.EC1[a,j,k] for a in model.a for j in model.j for k in model.k)
     
     model.TEC_rule = Constraint(rule = TEC_rule)
     
@@ -152,7 +188,7 @@ def Superstructure_model(Superstructure):
     from pyomo.opt import SolverFactory
     import pyomo.environ
     opt = SolverFactory("glpk")
-    results = opt.solve(model)
+    results = opt.solve(model, tee = True)
     #sends results to stdout
     results.write()
     print("\nDisplaying Solution\n" + '-'*60)
