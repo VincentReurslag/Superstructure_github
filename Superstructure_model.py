@@ -24,6 +24,7 @@ def Superstructure_model(Superstructure):
     model.EC = Param(model.a, model.j, model.k, initialize = Superstructure.EC_data, doc = 'Cost data for equipment types')
     model.flow0 = Param(model.i, initialize = Superstructure.F0_data, doc = 'Flow coming out of membrane reactor')
     model.N = Param(model.a, model.j, model.k, initialize = Superstructure.Sizing_data)
+    model.RefSize = Param(model.a, model.j, model.k, initialize = Superstructure.RefSize_data)
     
     model.M = Param(initialize = 1e5)
     model.lb = Param(initialize = 500)
@@ -144,7 +145,8 @@ def Superstructure_model(Superstructure):
         slope = (model.ub**model.N[a,j,k] - model.lb**model.N[a,j,k])/(model.ub - model.lb)
         b = model.lb**model.N[a,j,k] - slope * model.lb 
         
-        return model.EC1[a,j,k] <= (model.flowtot[a,j,k] * slope + b) + model.M * (1-model.y[a,j,k])
+        # Using economy of scale equation: Cost = (Flow^N/FlowRef^N) * (index2020/indexRef)
+        return model.EC1[a,j,k] <= (model.flowtot[a,j,k] * slope + b) / (model.RefSize[a,j,k]**model.N[a,j,k]) + model.M * (1-model.y[a,j,k])
     
         
     def EC_rule2(model, a, j, k):
@@ -152,7 +154,8 @@ def Superstructure_model(Superstructure):
         slope = (model.ub**model.N[a,j,k] - model.lb**model.N[a,j,k])/(model.ub - model.lb)
         b = model.lb**model.N[a,j,k] - slope * model.lb 
         
-        return model.EC1[a,j,k] >= (model.flowtot[a,j,k] * slope + b) - model.M * (1-model.y[a,j,k])
+        # Using economy of scale equation: Cost = (Flow^N/FlowRef^N) * (index2020/indexRef)
+        return model.EC1[a,j,k] >= (model.flowtot[a,j,k] * slope + b) / (model.RefSize[a,j,k]**model.N[a,j,k]) - model.M * (1-model.y[a,j,k])
                         
                         
     def EC_rule3(model, a, j, k):
