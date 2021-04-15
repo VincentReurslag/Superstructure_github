@@ -17,6 +17,7 @@ def Superstructure_model(Superstructure):
     model.j = Set(initialize = Superstructure.j, doc = 'Processing stage')
     model.k = Set(initialize = Superstructure.k, doc = 'Technology options')
     model.i = Set(initialize = Superstructure.i, doc = 'Species in reaction mixture')
+    model.u = Set(initialize = Superstructure.u, doc = 'Utilities considered')
     
     #initialize parameters. The data comes from the created Superstructure class
     #M parameter is for the big M notation later in the model
@@ -27,9 +28,15 @@ def Superstructure_model(Superstructure):
     model.RefSize = Param(model.a, model.j, model.k, initialize = Superstructure.RefSize_data)
     model.Q = Param(model.a, model.j, model.k, model.i, initialize = Superstructure.Q_data)
     
+    model.Tau = Param(model.a , model.j, model.k, model.i, initialize = Superstructure.Tau_data)
+    model.Temp = Param(model.a, model.j, model.k, initialize = Superstructure.Temp_data)
+    
+    
+    
     model.M = Param(initialize = 1e5)
     model.lb = Param(initialize = 500)
     model.ub = Param(initialize = 1000)
+    model.T0 = Param(initialize = 20)
     
     ##initialize variables
     model.flow_in = Var(model.a, model.j, model.k, model.i, bounds = (0,None), initialize = 0, doc = 'Flow at every equipment for every component')
@@ -41,6 +48,16 @@ def Superstructure_model(Superstructure):
     model.flow_inout = Var(model.a, model.j, model.k, model.i, bounds = (0, None), initialize = 0)
     
     model.EC1 = Var(model.a,model.i,model.k, bounds = (0, None), initialize = 0)
+    model.Utility = Var(model.a, model.j, model.k, model.u, bounds = (0 , None), initialize = 0)
+    model.HX = Var(model.a, model.j, model.k, model.u, bounds = (0 , None), initialize = 0)
+    model.TOT_Utility = Var(model.a, model.j, model.k, model.u, bounds = (0 , None), initialize = 0)
+    
+    def utilities_rule(model, a, j, k, u):
+        return model.Utility[a,j,k,u] == model.flow_intot[a,j,k] * model.Tau[a,j,k,u] 
+     
+        
+    model.utilities_rule = Constraint(model.a, model.j, model.k, model.u, rule = utilities_rule)
+    
     
     def massbalance_rule1(model,a, j, k, i):
         """3 massbalance rules for big M implementation:
