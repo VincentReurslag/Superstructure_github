@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sat Apr  3 15:21:03 2021
+Run this script to execute te entire program
 
 @author: Vincent Reurslag
 
-Run this script to execute te entire program
 
 """
 
