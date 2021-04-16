@@ -52,12 +52,13 @@ def Superstructure_model(Superstructure):
     model.HX = Var(model.a, model.j, model.k, bounds = (0 , None), initialize = 0)
     model.TOT_Utility = Var(model.a, model.j, model.k, model.u, bounds = (0 , None), initialize = 0)
     model.prevtemp = Var(model.a, model.j, model.k, bounds = (0, None), initialize = 0)
+    model.prevtemp_stage = Var(model.a, bounds = (0, None), initialize = 0)
     
     def utilities_rule(model, a, j, k, u):
         return model.Utility[a,j,k,u] == model.flow_intot[a,j,k] * model.Tau[a,j,k,u]
 
     def HX_rule(model, a, j, k):
-        return model.HX[a,j,k] == (model.Temp[a,j,k] - model.prevtemp[a]) * model.flow_intot[a,j,k]
+        return model.HX[a,j,k] == (model.Temp[a,j,k] - model.prevtemp[a,j,k]) * model.flow_intot[a,j,k]
     
     
     
@@ -81,13 +82,15 @@ def Superstructure_model(Superstructure):
             return model.prevtemp[a,j,k] <= model.M * model.y[a-1,j,k]
         else:
             return Constraint.Skip
-    
+        
+
     model.utilities_rule = Constraint(model.a, model.j, model.k, model.u, rule = utilities_rule)
-    #model.HX_rule = Constraint(model.a, model.j, model.k, rule = HX_rule)
+    model.HX_rule = Constraint(model.a, model.j, model.k, rule = HX_rule)
 
     model.prevtemp_rule1 = Constraint(model.a, model.j, model.k, rule = prevtemp_rule1)
     model.prevtemp_rule2 = Constraint(model.a, model.j, model.k, rule = prevtemp_rule2)
     model.prevtemp_rule3 = Constraint(model.a, model.j, model.k, rule = prevtemp_rule3)
+    #model.prevtemp_stage = Constraint(model.a, rule = prevtemp_stage)
     
     
     def massbalance_rule1(model,a, j, k, i):
