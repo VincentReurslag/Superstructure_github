@@ -8,7 +8,6 @@ Run this script to execute te entire program
 
 """
 
-
 import pandas as pd
 from Superstructure_class import Superstructure
 from Superstructure_model import Superstructure_model

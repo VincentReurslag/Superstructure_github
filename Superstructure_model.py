@@ -36,7 +36,7 @@ def Superstructure_model(Superstructure):
     model.M = Param(initialize = 1e5)
     model.lb = Param(initialize = 500)
     model.ub = Param(initialize = 1000)
-    model.T0 = Param(initialize = 20)
+    model.T0 = Param(initialize = 80)
     
     ##initialize variables
     model.flow_in = Var(model.a, model.j, model.k, model.i, bounds = (0,None), initialize = 0, doc = 'Flow at every equipment for every component')
@@ -49,14 +49,45 @@ def Superstructure_model(Superstructure):
     
     model.EC1 = Var(model.a,model.i,model.k, bounds = (0, None), initialize = 0)
     model.Utility = Var(model.a, model.j, model.k, model.u, bounds = (0 , None), initialize = 0)
-    model.HX = Var(model.a, model.j, model.k, model.u, bounds = (0 , None), initialize = 0)
+    model.HX = Var(model.a, model.j, model.k, bounds = (0 , None), initialize = 0)
     model.TOT_Utility = Var(model.a, model.j, model.k, model.u, bounds = (0 , None), initialize = 0)
+    model.prevtemp = Var(model.a, model.j, model.k, bounds = (0, None), initialize = 0)
     
     def utilities_rule(model, a, j, k, u):
-        return model.Utility[a,j,k,u] == model.flow_intot[a,j,k] * model.Tau[a,j,k,u] 
-     
-        
+        return model.Utility[a,j,k,u] == model.flow_intot[a,j,k] * model.Tau[a,j,k,u]
+
+    def HX_rule(model, a, j, k):
+        return model.HX[a,j,k] == (model.Temp[a,j,k] - model.prevtemp[a]) * model.flow_intot[a,j,k]
+    
+    
+    
+  
+    def prevtemp_rule1(model,a,j,k):
+        if a >= 2:
+            return model.prevtemp[a,j,k] <= model.Temp[a-1,j,k] + model.M * (1-model.y[a-1,j,k])
+        elif j == 1 and k == 1:
+            return model.prevtemp[a,j,k] == model.T0
+        else:
+            return model.prevtemp[a,j,k] == 0
+    
+    def prevtemp_rule2(model,a,j,k):
+        if a >= 2:
+            return model.prevtemp[a,j,k] >= model.Temp[a-1,j,k] - model.M * (1-model.y[a-1,j,k])
+        else:
+            return Constraint.Skip
+    
+    def prevtemp_rule3(model,a,j,k):
+        if a >= 2:
+            return model.prevtemp[a,j,k] <= model.M * model.y[a-1,j,k]
+        else:
+            return Constraint.Skip
+    
     model.utilities_rule = Constraint(model.a, model.j, model.k, model.u, rule = utilities_rule)
+    #model.HX_rule = Constraint(model.a, model.j, model.k, rule = HX_rule)
+
+    model.prevtemp_rule1 = Constraint(model.a, model.j, model.k, rule = prevtemp_rule1)
+    model.prevtemp_rule2 = Constraint(model.a, model.j, model.k, rule = prevtemp_rule2)
+    model.prevtemp_rule3 = Constraint(model.a, model.j, model.k, rule = prevtemp_rule3)
     
     
     def massbalance_rule1(model,a, j, k, i):
