@@ -94,19 +94,21 @@ def Superstructure_model(Superstructure):
         """3 massbalance rules for big M implementation:
             It calculates flow[j,k,i] = flow at previous stage * Separation factor * logic_variable
             This equation is an MINLP so it is converted using the big M notation for performance"""
-        if a >= 2:
+        if a in [2,3,4,5]:
             return model.flow_in[a,j,k,i] <= (model.flow_instage[a-1,i] + model.Q[a,j,k,i]) + model.M * (1-model.y[a,j,k])
-        else:
+        elif a == 1:
             return model.flow_in[a,j,k,i] == (model.flow_in0[i] + model.Q[a,j,k,i]) * model.y[a,j,k]
+        else:
+            return Constraint.Skip
         
     def massbalance_rule2(model, a, j, k, i):
-        if a >= 2:
+        if a in [2,3,4,5]:
             return model.flow_in[a,j,k,i] >= (model.flow_instage[a-1,i] + model.Q[a,j,k,i]) - model.M * (1-model.y[a,j,k])
         else:
             return Constraint.Skip
     
     def massbalance_rule3(model, a, j, k, i):
-        if a >= 2:
+        if a in [2,3,4,5]:
             return model.flow_in[a,j,k,i] <= model.M * model.y[a,j,k]
         else:
             return Constraint.Skip
@@ -148,8 +150,11 @@ def Superstructure_model(Superstructure):
     
     
     
+    #Glycerol processing
+    def Glycerols1_rule(model, i):
+        return model.flow_in[6,1,1,i] == model.W[1,1,2,i]
     
-    
+    model.Glycerols1_rule = Constraint(model.i, rule = Glycerols1_rule)
     
     
     #Logic rules

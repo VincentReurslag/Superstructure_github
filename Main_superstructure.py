@@ -30,7 +30,7 @@ Superstructure.get_3index(xlsx_file, ['EC a,j,k','Temperature a,j,k','ReferenceC
 Superstructure.get_1index(xlsx_file, ['Flow0 i', 'CP i', 'CompCost i', 'SpecificCostU u'])
 
 ##############################################################
-#model = Superstructure_model(Superstructure)
+model = Superstructure_model(Superstructure)
 #Superstructure.get_results(model)
 
 #excel_write(Superstructure,output_file)
