@@ -16,10 +16,10 @@ from Excel_write import excel_write
 
 
 #xlsx_file is the input file with the data, output_file will be the result file
-xlsx_file = 'SS_dataV6.xlsx'
+xlsx_file = 'SS_dataV7.xlsx'
 output_file = 'ResultsV2.xlsx'
 
-a = [1,2,3,4,5]
+a = [1,2,3,4,5,6,7,8]
 j = [1,2,3,4]
 k = [1,2,3]
 
@@ -30,7 +30,7 @@ Superstructure.get_3index(xlsx_file, ['EC a,j,k','Temperature a,j,k','ReferenceC
 Superstructure.get_1index(xlsx_file, ['Flow0 i', 'CP i', 'CompCost i', 'SpecificCostU u'])
 
 ##############################################################
-model = Superstructure_model(Superstructure)
+#model = Superstructure_model(Superstructure)
 #Superstructure.get_results(model)
 
 #excel_write(Superstructure,output_file)
