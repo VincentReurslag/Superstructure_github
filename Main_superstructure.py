@@ -35,5 +35,3 @@ model = Superstructure_model(Superstructure)
 
 #excel_write(Superstructure,output_file)
 
-
-

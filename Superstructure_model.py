@@ -94,7 +94,7 @@ def Superstructure_model(Superstructure):
         """3 massbalance rules for big M implementation:
             It calculates flow[j,k,i] = flow at previous stage * Separation factor * logic_variable
             This equation is an MINLP so it is converted using the big M notation for performance"""
-        if a in [2,3,4,5]:
+        if a in [2,3,4,5,7,8]:
             return model.flow_in[a,j,k,i] <= (model.flow_instage[a-1,i] + model.Q[a,j,k,i]) + model.M * (1-model.y[a,j,k])
         elif a == 1:
             return model.flow_in[a,j,k,i] == (model.flow_in0[i] + model.Q[a,j,k,i]) * model.y[a,j,k]
@@ -102,13 +102,13 @@ def Superstructure_model(Superstructure):
             return Constraint.Skip
         
     def massbalance_rule2(model, a, j, k, i):
-        if a in [2,3,4,5]:
+        if a in [2,3,4,5,7,8]:
             return model.flow_in[a,j,k,i] >= (model.flow_instage[a-1,i] + model.Q[a,j,k,i]) - model.M * (1-model.y[a,j,k])
         else:
             return Constraint.Skip
     
     def massbalance_rule3(model, a, j, k, i):
-        if a in [2,3,4,5]:
+        if a in [2,3,4,5,7,8]:
             return model.flow_in[a,j,k,i] <= model.M * model.y[a,j,k]
         else:
             return Constraint.Skip
@@ -164,10 +164,48 @@ def Superstructure_model(Superstructure):
     model.Glycerols2_rule = Constraint(model.k, model.i, rule = Glycerols2_rule)
     model.Glycerols3_rule = Constraint(model.k, model.i, rule = Glycerols3_rule)
     
+    
+    
+    def Glycerols1_rule1(model, k, i):
+        return model.flow_in[6,2,k,i] <= sum(model.W[2,3,k,i] for k in model.k)  + model.M * (1 - model.y[6,2,k])
+    
+    def Glycerols2_rule1(model, k, i):
+        return model.flow_in[6,2,k,i] >= sum(model.W[2,3,k,i] for k in model.k) - model.M * (1 - model.y[6,2,k])
+    
+    def Glycerols3_rule1(model, k, i):
+        return model.flow_in[6,2,k,i] <= model.M * model.y[6,2,k]
+    
+    model.Glycerols1_rule1 = Constraint(model.k, model.i, rule = Glycerols1_rule1)
+    model.Glycerols2_rule1 = Constraint(model.k, model.i, rule = Glycerols2_rule1)
+    model.Glycerols3_rule1 = Constraint(model.k, model.i, rule = Glycerols3_rule1)
+    
+    
+    
+    def Glycerols1_rule2(model, k, i):
+        return model.flow_in[6,3,k,i] <= sum(model.W[4,3,k,i] for k in model.k)  + model.M * (1 - model.y[6,3,k])
+    
+    def Glycerols2_rule2(model, k, i):
+        return model.flow_in[6,3,k,i] >= sum(model.W[4,3,k,i] for k in model.k) - model.M * (1 - model.y[6,3,k])
+    
+    def Glycerols3_rule2(model, k, i):
+        return model.flow_in[6,3,k,i] <= model.M * model.y[6,3,k]
+    
+    model.Glycerols1_rule2 = Constraint(model.k, model.i, rule = Glycerols1_rule2)
+    model.Glycerols2_rule2 = Constraint(model.k, model.i, rule = Glycerols2_rule2)
+    model.Glycerols3_rule2 = Constraint(model.k, model.i, rule = Glycerols3_rule2)
+    
     def logic_glyc(model):
         return sum(model.y[1,1,k] for k in model.k) - sum(model.y[6,1,k] for k in model.k) == 0
     
-    model.logic_glyc_rule = Constraint(rule = logic_glyc)
+    def logic_glyc1(model):
+        return sum(model.y[2,3,k] for k in model.k) - sum(model.y[6,2,k] for k in model.k) == 0
+    
+    def logic_glyc2(model):
+        return sum(model.y[4,3,k] for k in model.k) - sum(model.y[6,3,k] for k in model.k) == 0
+    
+    model.logic_glyc_rule  = Constraint(rule = logic_glyc)
+    model.logic_glyc_rule1 = Constraint(rule = logic_glyc1)
+    model.logic_glyc_rule2 = Constraint(rule = logic_glyc2)
     
     #Logic rules
     def logic_rule(model, a):
