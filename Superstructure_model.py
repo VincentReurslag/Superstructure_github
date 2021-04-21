@@ -151,10 +151,18 @@ def Superstructure_model(Superstructure):
     
     
     #Glycerol processing
-    def Glycerols1_rule(model, i):
-        return model.flow_in[6,1,1,i] == model.W[1,1,2,i]
+    def Glycerols1_rule(model, k, i):
+        return model.flow_in[6,1,k,i] <= sum(model.W[1,1,K,i] for K in model.k)  + model.M * (1 - model.y[6,1,k])
     
-    model.Glycerols1_rule = Constraint(model.i, rule = Glycerols1_rule)
+    def Glycerols2_rule(model, k, i):
+        return model.flow_in[6,1,k,i] >= sum(model.W[1,1,K,i] for K in model.k) - model.M * (1 - model.y[6,1,k])
+    
+    def Glycerols3_rule(model, k, i):
+        return model.flow_in[6,1,k,i] <= model.M * model.y[6,1,k]
+    
+    model.Glycerols1_rule = Constraint(model.k, model.i, rule = Glycerols1_rule)
+    model.Glycerols2_rule = Constraint(model.k, model.i, rule = Glycerols2_rule)
+    model.Glycerols3_rule = Constraint(model.k, model.i, rule = Glycerols3_rule)
     
     
     #Logic rules
