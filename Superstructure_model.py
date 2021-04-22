@@ -15,7 +15,7 @@ def Superstructure_model(Superstructure):
     #initialize sets, want to add utilities u later to this
     model.a = Set(initialize = Superstructure.a, doc = 'Process step')
     model.j = Set(initialize = Superstructure.j, doc = 'Processing stage')
-    model.k = Set(initialize = Superstructure.k, doc = 'Technology options')
+    model.k = Set(initialize = Superstructure.k, doc = 'AIChnology options')
     model.i = Set(initialize = Superstructure.i, doc = 'Species in reaction mixture')
     model.u = Set(initialize = Superstructure.u, doc = 'Utilities considered')
     
@@ -38,7 +38,7 @@ def Superstructure_model(Superstructure):
     model.ub = Param(initialize = 1000, doc = 'upper blow bound in main superstructure to approximate exponential function')
     model.T0 = Param(initialize = 20, doc = 'Starting temperature of incoming flow from the reactor')
     
-    model.K_eng = Param(initialize = 3,3, doc = 'Coefficient for engineering and planning')
+    model.K_eng = Param(initialize = 3.3, doc = 'Coefficient for engineering and planning')
     model.IR = Param(initialize = 0.1, doc = 'Interest Rate on investment')
     model.LT = Param(initialize = 20, doc = 'Estimated lifetime of plant')
     
@@ -49,7 +49,7 @@ def Superstructure_model(Superstructure):
     ##initialize variables
     model.flow_in = Var(model.a, model.j, model.k, model.i, bounds = (0,None), initialize = 0, doc = 'Ingoing flow at every equipment for every component')
     model.y = Var(model.a, model.j, model.k, domain = Binary, doc = 'Logic variable')
-    model.TEC = Var(bounds = (0, None), initialize = 0, doc = 'Total equipment cost summed up for all chosen equipments')
+    model.AIC = Var(bounds = (0, None), initialize = 0, doc = 'Total equipment cost summed up for all chosen equipments')
     model.BDP = Var(bounds = (0, None), initialize = 0, doc = 'Biodiesel production')
     model.flow_intot = Var(model.a, model.j, model.k, bounds = (0, None), initialize = 0, doc = 'Total flow going into an equipment (all components summed up)')
     model.flow_instage = Var(model.a, model.i, bounds = (0, None), initialize = 0, doc = 'flow going through the different process stages (all 0 flows removed)')
@@ -62,6 +62,8 @@ def Superstructure_model(Superstructure):
     model.dT = Var(model.a, bounds = (None, None), initialize = 0, doc = 'Temperature difference between stages for HX calculations')
     model.W = Var(model.a, model.j, model.k, model.i, bounds = (0, None), initialize = 0, doc = 'Waste streams from unit operations which are used for downstream processing')
     
+    
+    model.TUC = Var(bounds = (0, None), initialize = 0, doc = 'Total utility costs')
     
     
     
@@ -365,15 +367,17 @@ def Superstructure_model(Superstructure):
     model.EC_rule3 = Constraint(model.a, model.j, model.k, rule = EC_rule3)
     
     
-    def TEC_rule(model):
-        """For every k and every j multiply the equipment cost with the total flow and sum it up to determine TEC"""
-        return model.TEC == sum(model.EC[a,j,k] * model.CostCorr[a,j,k] for a in model.a for j in model.j for k in model.k)
+    def AIC_rule(model):
+        """Annualized equipment costs using liftime and interest rates"""
+        return model.AIC == sum(model.EC[a,j,k] * model.CostCorr[a,j,k] for a in model.a for j in model.j for k in model.k) * model.K_eng * (model.IR * (model.IR + 1)**model.LT)/((model.IR + 1)**model.LT - 1)
     
-    model.TEC_rule = Constraint(rule = TEC_rule)
+    model.AIC_rule = Constraint(rule = AIC_rule)
     
+    def TUC_rule(model):
+        """Calculating total utility costs by multiplying usage with the price and summing everything up"""
+        return model.TUC == sum(model.Utility[a,j,k,u] * model.UCost[u] for a in model.a for j in model.j for k in model.k for u in model.u)
     
-    
-    
+    model.TUC_rule = Constraint(rule = TUC_rule)
     
     
     
@@ -395,10 +399,10 @@ def Superstructure_model(Superstructure):
 
     #Objective function
     def objective_rule(model):
-        """Objective is to minimize cost (TEC)"""
-        return model.TEC
+        """Objective is to minimize cost (AIC)"""
+        return model.AIC
     
-    #Minimize the TEC
+    #Minimize the AIC
     model.objective = Objective(rule = objective_rule, sense = minimize)
     
     
