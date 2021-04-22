@@ -41,9 +41,14 @@ def Superstructure_model(Superstructure):
     model.K_eng = Param(initialize = 3.3, doc = 'Coefficient for engineering and planning')
     model.IR = Param(initialize = 0.1, doc = 'Interest Rate on investment')
     model.LT = Param(initialize = 20, doc = 'Estimated lifetime of plant')
+    model.H = Param(initialize = 8000, doc = 'Number of operating hours of a plant yearly')
     
     model.CCost = Param(model.i, initialize = Superstructure.CCost_data, doc = 'Cost per kg for components used')
     model.UCost = Param(model.u, initialize = Superstructure.uCost_data, doc = 'Costs for utility usage')
+    
+    model.GlycWaste = Param(initialize = 10, doc = 'Cost for glycerol waste')
+    model.GlycSell1 = Param(initialize = 50, doc = 'Selling upgraded glycerol 80%')
+    model.GlycSell2 = Param(initialize = 200, doc = 'Selling upgraded glycerol 99%')
     
     
     ##initialize variables
@@ -53,7 +58,8 @@ def Superstructure_model(Superstructure):
     model.BDP = Var(bounds = (0, None), initialize = 0, doc = 'Biodiesel production')
     model.flow_intot = Var(model.a, model.j, model.k, bounds = (0, None), initialize = 0, doc = 'Total flow going into an equipment (all components summed up)')
     model.flow_instage = Var(model.a, model.i, bounds = (0, None), initialize = 0, doc = 'flow going through the different process stages (all 0 flows removed)')
-    model.flow_inout = Var(model.a, model.j, model.k, model.i, bounds = (0, None), initialize = 0, doc = 'Main outgoing flow from a unit operation')
+    model.flow_inout = Var(model.a, model.j, model.k, model.i, bounds = (0, None), initialize = 0, doc = 'Main out flow from a unit operation')
+    model.flow_outtot = Var(model.a, model.j, model.k, bounds = (0, None), initialize = 0, doc = 'Summed up for components outgoing flow from a unit operation')
     
     model.CostCorr = Var(model.a,model.i,model.k, bounds = (0, None), initialize = 0, doc = 'Cost correction factor for economy of scale (C = RefCost * CostCorr)')
     model.Utility = Var(model.a, model.j, model.k, model.u, bounds = (0 , None), initialize = 0, doc = 'Utility usages for all equipment and all utilities')
@@ -64,8 +70,9 @@ def Superstructure_model(Superstructure):
     
     
     model.TUC = Var(bounds = (0, None), initialize = 0, doc = 'Total utility costs')
-    
-    
+    model.RMC = Var(bounds = (0, None), initialize = 0, doc = 'Material costs for make up flows')
+    model.OMC = Var(bounds = (0, None), initialize= 0, doc = 'Operating and managment cost')
+    model.GlycCost = Var(initialize = 0, doc = 'Profit or loss made from glyceol waste or byproduct')
     
     
     
@@ -156,6 +163,13 @@ def Superstructure_model(Superstructure):
 
     
     model.flow_intot_rule = Constraint(model.a, model.j, model.k, rule = flowtot_rule)
+    
+    def flowouttot_rule(model, a, j, k):
+        return model.flow_outtot[a,j,k] == sum(model.flow_inout[a,j,k,i] for i in model.i)
+    
+    model.flow_outtot_rule = Constraint(model.a, model.j, model.k, rule = flowouttot_rule)
+    
+    
     
     
     
@@ -273,6 +287,11 @@ def Superstructure_model(Superstructure):
     model.logic_glyc_rule12 = Constraint(rule = logic_glyc12)
 
     
+    def GlycCost_rule(model):
+        return model.GlycCost ==  (model.flow_outtot[8,1,2] + model.flow_outtot[8,2,1] + model.flow_outtot[8,3,1])*model.GlycSell1 \
+                + (model.flow_outtot[8,1,3] + model.flow_outtot[8,2,2] + model.flow_outtot[8,2,3] + model.flow_outtot[8,3,2]) - model.flow_outtot[8,1,1] * model.GlycWaste
+        
+    model.GlycCost_rule = Constraint(rule = GlycCost_rule)
     
     
     #Logic rules
@@ -379,6 +398,18 @@ def Superstructure_model(Superstructure):
     
     model.TUC_rule = Constraint(rule = TUC_rule)
     
+    def RMC_rule(model):
+        """Cost calculation for make up flows Q"""
+        return model.RMC == sum(model.Q[a,j,k,i] * model.CCost[i] for a in model.a for j in model.j for k in model.k for i in model.i)
+    
+    model.RMC_rule = Constraint(rule = RMC_rule)
+    
+    def OMC_rule(model):
+        """Calculation for management and operating costs"""
+        return model.OMC == 0.02 * model.AIC
+    
+    model.OMC_rule = Constraint(rule = OMC_rule)
+    
     
     
     
@@ -418,6 +449,12 @@ def Superstructure_model(Superstructure):
     def pyomo_postprocess(options=None, instance=None, results=None):
       model.flow_intot.display()
       model.dT.display()
+      model.AIC.display()
+      model.TUC.display()
+      model.RMC.display()
+      model.OMC.display()
+      model.BDP.display()
+      model.GlycCost.display()
     
     
     # This emulates what the pyomo command-line tools does
