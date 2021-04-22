@@ -36,7 +36,7 @@ def Superstructure_model(Superstructure):
     model.M = Param(initialize = 1e5, doc = 'M parameter to apply big M formuylation')
     model.lb = Param(initialize = 500, doc = 'Lower flow bound in main superstructure to approximate exponential function')
     model.ub = Param(initialize = 1000, doc = 'upper blow bound in main superstructure to approximate exponential function')
-    model.T0 = Param(initialize = 80, doc = 'Starting temperature of incoming flow from the reactor')
+    model.T0 = Param(initialize = 20, doc = 'Starting temperature of incoming flow from the reactor')
     
     ##initialize variables
     model.flow_in = Var(model.a, model.j, model.k, model.i, bounds = (0,None), initialize = 0, doc = 'Ingoing flow at every equipment for every component')
@@ -67,11 +67,11 @@ def Superstructure_model(Superstructure):
 
     def dT_rule1(model,a):
         """Using dT = Temp_data[a] * y - Temp_[a-1] * y and taking the sum to find the temperatures"""
-        if a >= 2:
+        if a in [2,3,4,5,7,8]:
             return model.dT[a] == (sum(model.Temp[a,j,k] * model.y[a,j,k] for j in model.j for k in model.k)  -  sum(model.Temp[a-1,j,k] * model.y[a-1,j,k] for j in model.j for k in model.k)) 
-        else:
+        elif a in [1,6]:
             return model.dT[a] == (sum(model.Temp[a,j,k] * model.y[a,j,k] for j in model.j for k in model.k) - model.T0)
-        
+
         
     def HX_rule(model, a):
         return model.HX[a] == model.dT[a] * 700
@@ -206,6 +206,64 @@ def Superstructure_model(Superstructure):
     model.logic_glyc_rule  = Constraint(rule = logic_glyc)
     model.logic_glyc_rule1 = Constraint(rule = logic_glyc1)
     model.logic_glyc_rule2 = Constraint(rule = logic_glyc2)
+    
+    
+    
+    def logic_glyc3(model):
+        """If waste is selected all other options will be ruled out"""
+        return 2 * model.y[6,1,1] - model.y[7,1,1] - model.y[8,1,1] == 0
+    
+    def logic_glyc4(model):
+        """If processing is selected either selling or further processing becomes avialable"""
+        return model.y[6,1,2] - model.y[7,1,2] - model.y[7,1,3] == 0 
+    
+    def logic_glyc5(model):
+        """If sell is selected all options will be ruled out """
+        return model.y[7,1,2] - model.y[8,1,2] == 0
+    
+    def logic_glyc6(model):
+        """If again procesing is selected premium selling must be slected as well"""
+        return model.y[7,1,3] - model.y[8,1,3] == 0
+    
+    
+    
+    def logic_glyc7(model):
+        """If sell is selected all other options will be ruled out"""
+        return 2 * model.y[6,2,1] - model.y[7,2,1] - model.y[8,2,1] == 0
+    
+    def logic_glyc8(model):
+        """If processing is selected either selling or further processing becomes avialable"""
+        return model.y[6,2,2] - model.y[7,2,2] - model.y[7,2,3] == 0
+    
+    def logic_glyc9(model):
+        """If sell is selected all other options will be ruled out"""
+        return model.y[7,2,2] - model.y[8,2,2] == 0
+    
+    def logic_glyc10(model):
+        """If again procesing is selected premium selling must be slected as well"""
+        return model.y[7,2,3] - model.y[8,2,3] == 0
+    
+    
+    
+    def logic_glyc11(model):
+        return 2 * model.y[6,3,1] - model.y[7,3,1] - model.y[8,3,1] == 0
+    
+    def logic_glyc12(model):
+        return 2 * model.y[6,3,2] - model.y[7,3,2] - model.y[8,3,2] == 0
+    
+    model.logic_glyc_rule3 = Constraint(rule = logic_glyc3)
+    model.logic_glyc_rule4 = Constraint(rule = logic_glyc4)
+    model.logic_glyc_rule5 = Constraint(rule = logic_glyc5)
+    model.logic_glyc_rule6 = Constraint(rule = logic_glyc6)
+    model.logic_glyc_rule7 = Constraint(rule = logic_glyc7)
+    model.logic_glyc_rule8 = Constraint(rule = logic_glyc8)
+    model.logic_glyc_rule9 = Constraint(rule = logic_glyc9)
+    model.logic_glyc_rule10 = Constraint(rule = logic_glyc10)
+    model.logic_glyc_rule11 = Constraint(rule = logic_glyc11)
+    model.logic_glyc_rule12 = Constraint(rule = logic_glyc12)
+
+    
+    
     
     #Logic rules
     def logic_rule(model, a):
