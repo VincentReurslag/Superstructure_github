@@ -38,6 +38,14 @@ def Superstructure_model(Superstructure):
     model.ub = Param(initialize = 1000, doc = 'upper blow bound in main superstructure to approximate exponential function')
     model.T0 = Param(initialize = 20, doc = 'Starting temperature of incoming flow from the reactor')
     
+    model.K_eng = Param(initialize = 3,3, doc = 'Coefficient for engineering and planning')
+    model.IR = Param(initialize = 0.1, doc = 'Interest Rate on investment')
+    model.LT = Param(initialize = 20, doc = 'Estimated lifetime of plant')
+    
+    model.CCost = Param(model.i, initialize = Superstructure.CCost_data, doc = 'Cost per kg for components used')
+    model.UCost = Param(model.u, initialize = Superstructure.uCost_data, doc = 'Costs for utility usage')
+    
+    
     ##initialize variables
     model.flow_in = Var(model.a, model.j, model.k, model.i, bounds = (0,None), initialize = 0, doc = 'Ingoing flow at every equipment for every component')
     model.y = Var(model.a, model.j, model.k, domain = Binary, doc = 'Logic variable')
