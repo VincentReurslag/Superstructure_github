@@ -91,7 +91,7 @@ def Superstructure_model(Superstructure):
 
         
     def HX_rule(model, a):
-        return model.HX[a] == model.dT[a] * 700
+        return model.HX[a] == model.dT[a] * sum(model.flow_instage[a,i] for i in model.i)
     
   
     model.utilities_rule = Constraint(model.a, model.j, model.k, model.u, rule = utilities_rule)
@@ -461,6 +461,7 @@ def Superstructure_model(Superstructure):
     from pyomo.opt import SolverFactory
     import pyomo.environ
     opt = SolverFactory("gurobi",solver_io="python")
+    opt.options['NonConvex'] = 2   
     results = opt.solve(model)
     #sends results to stdout
     results.write()
