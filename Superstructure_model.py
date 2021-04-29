@@ -460,7 +460,7 @@ def Superstructure_model(Superstructure):
     # This emulates what the pyomo command-line tools does
     from pyomo.opt import SolverFactory
     import pyomo.environ
-    opt = SolverFactory("mindpty")
+    opt = SolverFactory("gurobi",solver_io="python")
     results = opt.solve(model)
     #sends results to stdout
     results.write()
