@@ -16,18 +16,18 @@ model.CU = Set(initialize = [1], doc = 'cold utility')
 model.k = Set(initialize = [1,2,3], doc = 'stages')
 
 
-model.TIN_i = Param(model.i, initialize = {1:443,2:423} )
-model.TIN_j = Param(model.j, initialize = {1:293,2:353} )
-model.TIN_HU = Param(model.HU, initialize = {1:450} )
-model.TIN_CU = Param(model.CU, initialize = {1:293} )
+model.TIN_i = Param(model.i, initialize = {1:100,2:100} )
+model.TIN_j = Param(model.j, initialize = {1:20,2:20} )
+model.TIN_HU = Param(model.HU, initialize = {1:177} )
+model.TIN_CU = Param(model.CU, initialize = {1:20} )
 
-model.TOUT_i = Param(model.i, initialize = {1:333,2:303} )
-model.TOUT_j = Param(model.j, initialize = {1:408,2:413} )
-model.TOUT_HU = Param(model.HU, initialize = {1:450} )
-model.TOUT_CU = Param(model.CU, initialize = {1:313} )
+model.TOUT_i = Param(model.i, initialize = {1:20,2:30} )
+model.TOUT_j = Param(model.j, initialize = {1:200,2:60} )
+model.TOUT_HU = Param(model.HU, initialize = {1:177} )
+model.TOUT_CU = Param(model.CU, initialize = {1:25} )
 
-model.F_i = Param(model.i, initialize = {1:30,2:15} )
-model.F_j = Param(model.j, initialize = {1:20,2:40} )
+model.F_i = Param(model.i, initialize = {1:30,2:20} )
+model.F_j = Param(model.j, initialize = {1:25,2:15} )
 
 
 model.U = Param(initialize = 1)
@@ -195,17 +195,6 @@ model.dTbound_rule = Constraint(model.i,model.j,model.k,rule = dTbound_rule)
 
 
 
-
-def Objective_rule(model):
-    return sum(model.CCU * model.Qcu[i] for i in model.i) + sum(model.CHU * model.Qhu[j] for j in model.j) \
-           + sum(model.CF * model.z[i,j,k] for i in model.i for j in model.j for k in [1,2]) + sum(model.CF_CU * model.zcu[i] for i in model.i) \
-           + sum(model.CF_HU * model.zhu[j] for j in model.j) \
-           + sum(model.C * (model.Q[i,j,k] / (model.U * ( (model.dT[i,j,k]) * (model.dT[i,j,k+1]) * (model.dT[i,j,k] + model.dT[i,j,k+1]) / 2) ** 0.33) ) \
-           for i in model.i for j in model.j for k in [1,2] ) ** model.B \
-           + sum(model.C (model.Qcu[i] / (model.U * (model.dTcu[i] * (model.TOUT_i[i] - model.TIN_CU[CU]) 
-           * (model.dTcu[i] + (model.TOUT_i[i] - model.TIN_CU[CU]) ) / 2) ** 0.33) ) for i in model.i for CU in model.CU) ** model.B \
-           + sum(model.C * (model.Qhu[j] / (model.U * (model.dThu[j] * (model.TIN_HU[HU] - model.TOUT_j[j]) 
-           * (model.dThu[j] + (model.TIN_HU[HU] - model.TOUT_j[j]) ) / 2 ) ** 0.33 ) ) for j in model.j for HU in model.HU) ** model.B 
        
         
 
