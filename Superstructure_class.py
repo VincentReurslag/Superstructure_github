@@ -98,7 +98,7 @@ class Superstructure:
             elif sheet == 'Temperature a,j,k':
                 self.Temp_data = df
             elif sheet == 'ReferenceCost a,j,k':
-                self.Refcost_data = df
+                self.RefCost_data = df
             elif sheet == 'ReferenceSize a,j,k':
                 self.RefSize_data = df
             elif sheet == 'ReferenceIndex a,j,k':

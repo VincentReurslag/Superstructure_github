@@ -23,7 +23,8 @@ def Superstructure_model(Superstructure):
     #initialize parameters. The data comes from the created Superstructure class
     #M parameter is for the big M notation later in the model
     model.SF = Param(model.a, model.j, model.k, model.i, initialize = Superstructure.SF_data, doc = 'Split factor data for equipment types')
-    model.EC = Param(model.a, model.j, model.k, initialize = Superstructure.EC_data, doc = 'Cost data for equipment types')
+    model.EC = Param(model.a, model.j, model.k, initialize = Superstructure.RefCost_data, doc = 'Cost data for equipment types')
+    model.RefIndex = Param(model.a, model.j, model.k, initialize = Superstructure.RefIndex_data, doc = 'Index data for economy of scale calculation')
     model.flow_in0 = Param(model.i, initialize = Superstructure.F0_data, doc = 'Flow coming out of membrane reactor')
     model.N = Param(model.a, model.j, model.k, initialize = Superstructure.Sizing_data, doc = 'Economy of scale factor E')
     model.RefSize = Param(model.a, model.j, model.k, initialize = Superstructure.RefSize_data, doc = 'Reference size for economy of scale')
@@ -36,12 +37,15 @@ def Superstructure_model(Superstructure):
     model.M = Param(initialize = 1e5, doc = 'M parameter to apply big M formuylation')
     model.lb = Param(initialize = 500, doc = 'Lower flow bound in main superstructure to approximate exponential function')
     model.ub = Param(initialize = 1000, doc = 'upper blow bound in main superstructure to approximate exponential function')
+    model.lbGlyc = Param(initialize = 50, doc = 'Lower flow bound in Glycerol superstructure')
+    model.ubGlyc = Param(initialize = 150, doc = 'Upper flow bound in glycerol superstrucuture')
     model.T0 = Param(initialize = 20, doc = 'Starting temperature of incoming flow from the reactor')
     
     model.K_eng = Param(initialize = 3.3, doc = 'Coefficient for engineering and planning')
     model.IR = Param(initialize = 0.1, doc = 'Interest Rate on investment')
     model.LT = Param(initialize = 20, doc = 'Estimated lifetime of plant')
     model.H = Param(initialize = 8000, doc = 'Number of operating hours of a plant yearly')
+    model.CostIndex = Param(initialize = 607.5, doc = 'Index cost for 2019')
     
     model.CCost = Param(model.i, initialize = Superstructure.CCost_data, doc = 'Cost per kg for components used')
     model.UCost = Param(model.u, initialize = Superstructure.uCost_data, doc = 'Costs for utility usage')
@@ -360,21 +364,30 @@ def Superstructure_model(Superstructure):
         """This part of the code deals with economy of scale. The exponential
             function is linearized over a certain domain to approximate and keep the model
             as an MILP problem"""
-         
-        slope = (model.ub**model.N[a,j,k] - model.lb**model.N[a,j,k])/(model.ub - model.lb)
-        b = model.lb**model.N[a,j,k] - slope * model.lb 
+        
+        if a in [1,2,3,4,5]:
+            slope = (model.ub**model.N[a,j,k] - model.lb**model.N[a,j,k])/(model.ub - model.lb)
+            b = model.lb**model.N[a,j,k] - slope * model.lb 
+        elif a in [6,7,8]:
+            slope = (model.ubGlyc**model.N[a,j,k] - model.lbGlyc**model.N[a,j,k])/(model.ubGlyc - model.lbGlyc)
+            b = model.lbGlyc**model.N[a,j,k] - slope * model.lbGlyc       
         
         # Using economy of scale equation: Cost = (Flow^N/FlowRef^N) * (index2020/indexRef)
-        return model.CostCorr[a,j,k] <= (model.flow_intot[a,j,k] * slope + b) / (model.RefSize[a,j,k]**model.N[a,j,k]) + model.M * (1-model.y[a,j,k])
+        return model.CostCorr[a,j,k] <= (model.flow_intot[a,j,k] * slope + b) / (model.RefSize[a,j,k]**model.N[a,j,k]) * (model.CostIndex / model.RefIndex[a,j,k]) + model.M * (1-model.y[a,j,k])
     
         
     def EC_rule2(model, a, j, k):
         """Simply determining the y = ax + b of the approximation"""
-        slope = (model.ub**model.N[a,j,k] - model.lb**model.N[a,j,k])/(model.ub - model.lb)
-        b = model.lb**model.N[a,j,k] - slope * model.lb 
+        
+        if a in [1,2,3,4,5]:
+            slope = (model.ub**model.N[a,j,k] - model.lb**model.N[a,j,k])/(model.ub - model.lb)
+            b = model.lb**model.N[a,j,k] - slope * model.lb 
+        elif a in [6,7,8]:
+            slope = (model.ubGlyc**model.N[a,j,k] - model.lbGlyc**model.N[a,j,k])/(model.ubGlyc - model.lbGlyc)
+            b = model.lbGlyc**model.N[a,j,k] - slope * model.lbGlyc 
         
         # Using economy of scale equation: Cost = (Flow^N/FlowRef^N) * (index2020/indexRef)
-        return model.CostCorr[a,j,k] >= (model.flow_intot[a,j,k] * slope + b) / (model.RefSize[a,j,k]**model.N[a,j,k]) - model.M * (1-model.y[a,j,k])
+        return model.CostCorr[a,j,k] >= (model.flow_intot[a,j,k] * slope + b) / (model.RefSize[a,j,k]**model.N[a,j,k]) * (model.CostIndex / model.RefIndex[a,j,k]) - model.M * (1-model.y[a,j,k])
                         
                         
     def EC_rule3(model, a, j, k):
