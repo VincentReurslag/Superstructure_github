@@ -261,15 +261,13 @@ def Superstructure_model(Superstructure):
     
     def logic_glyc8(model):
         """If processing is selected either selling or further processing becomes avialable"""
-        return model.y[6,2,2] - model.y[7,2,2] - model.y[7,2,3] == 0
+        return model.y[6,2,2] - model.y[7,2,2] == 0
     
     def logic_glyc9(model):
         """If sell is selected all other options will be ruled out"""
-        return model.y[7,2,2] - model.y[8,2,2] == 0
+        return model.y[7,2,2] - model.y[8,2,2] - model.y[8,2,3] == 0
     
-    def logic_glyc10(model):
-        """If again procesing is selected premium selling must be slected as well"""
-        return model.y[7,2,3] - model.y[8,2,3] == 0
+
     
     
     
@@ -286,7 +284,7 @@ def Superstructure_model(Superstructure):
     model.logic_glyc_rule7 = Constraint(rule = logic_glyc7)
     model.logic_glyc_rule8 = Constraint(rule = logic_glyc8)
     model.logic_glyc_rule9 = Constraint(rule = logic_glyc9)
-    model.logic_glyc_rule10 = Constraint(rule = logic_glyc10)
+
     model.logic_glyc_rule11 = Constraint(rule = logic_glyc11)
     model.logic_glyc_rule12 = Constraint(rule = logic_glyc12)
 
