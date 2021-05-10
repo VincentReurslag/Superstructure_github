@@ -53,7 +53,7 @@ def Superstructure_model(Superstructure):
     model.FameSell = Param(initialize = 50, doc = 'biodiesel selling price')
     model.GlycWaste = Param(initialize = -1, doc = 'Cost for glycerol waste')
     model.GlycSell1 = Param(initialize = 5, doc = 'Selling upgraded glycerol 80%')
-    model.GlycSell2 = Param(initialize = 20, doc = 'Selling upgraded glycerol 99%')
+    model.GlycSell2 = Param(initialize = 0, doc = 'Selling upgraded glycerol 99%')
     model.GlycSell3 = Param(initialize = 30, doc = 'Selling upgraded glycerol 99.9%')
     
     
