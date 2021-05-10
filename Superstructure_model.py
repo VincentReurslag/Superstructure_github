@@ -50,10 +50,11 @@ def Superstructure_model(Superstructure):
     model.CCost = Param(model.i, initialize = Superstructure.CCost_data, doc = 'Cost per kg for components used')
     model.UCost = Param(model.u, initialize = Superstructure.uCost_data, doc = 'Costs for utility usage')
     
-    model.GlycWaste = Param(initialize = -10, doc = 'Cost for glycerol waste')
-    model.GlycSell1 = Param(initialize = 50, doc = 'Selling upgraded glycerol 80%')
-    model.GlycSell2 = Param(initialize = 200, doc = 'Selling upgraded glycerol 99%')
-    model.GlycSell3 = Param(initialize = 300, doc = 'Selling upgraded glycerol 99.9%')
+    model.FameSell = Param(initialize = 50, doc = 'biodiesel selling price')
+    model.GlycWaste = Param(initialize = -1, doc = 'Cost for glycerol waste')
+    model.GlycSell1 = Param(initialize = 5, doc = 'Selling upgraded glycerol 80%')
+    model.GlycSell2 = Param(initialize = 20, doc = 'Selling upgraded glycerol 99%')
+    model.GlycSell3 = Param(initialize = 30, doc = 'Selling upgraded glycerol 99.9%')
     
     
     ##initialize variables
@@ -232,6 +233,23 @@ def Superstructure_model(Superstructure):
     model.Glycerols2_rule2 = Constraint(model.k, model.i, rule = Glycerols2_rule2)
     model.Glycerols3_rule2 = Constraint(model.k, model.i, rule = Glycerols3_rule2)
     
+    
+    
+    
+    def Glycerols1_rule3(model, k, i):
+        return model.flow_in[6,4,k,i] <= sum(model.W[4,3,k,i] for k in model.k)  + model.M * (1 - model.y[6,4,k])
+    
+    def Glycerols2_rule3(model, k, i):
+        return model.flow_in[6,4,k,i] >= sum(model.W[4,3,k,i] for k in model.k) - model.M * (1 - model.y[6,4,k])
+    
+    def Glycerols3_rule3(model, k, i):
+        return model.flow_in[6,4,k,i] <= model.M * model.y[6,4,k]
+    
+    model.Glycerols1_rule3 = Constraint(model.k, model.i, rule = Glycerols1_rule3)
+    model.Glycerols2_rule3 = Constraint(model.k, model.i, rule = Glycerols2_rule3)
+    model.Glycerols3_rule3 = Constraint(model.k, model.i, rule = Glycerols3_rule3)
+    
+    
     def logic_glyc(model):
         return sum(model.y[1,1,k] for k in model.k) - sum(model.y[6,1,k] for k in model.k) == 0
     
@@ -327,7 +345,7 @@ def Superstructure_model(Superstructure):
     
     def GlycOMC_rule(model):
         """Calculation for management and operating costs"""
-        return model.GlycOMC == 0.02 * model.AIC
+        return model.GlycOMC == 0.02 * model.GlycAIC
     
     model.GlycOMC_rule = Constraint(rule = GlycOMC_rule)
     
@@ -467,7 +485,11 @@ def Superstructure_model(Superstructure):
     
     model.OMC_rule = Constraint(rule = OMC_rule)
     
+    def MTAC_rule(model):
+        """Modified total annualized cost"""
+        return model.MTAC == model.AIC + model.RMC + model.OMC - model.BDP * model.FameSell
     
+    model.MTAC_rule = Constraint(rule = MTAC_rule)
     
     
     #MISC calculations 
@@ -488,7 +510,7 @@ def Superstructure_model(Superstructure):
     #Objective function
     def objective_rule(model):
         """Objective is to minimize cost (AIC)"""
-        return model.AIC
+        return model.MTAC + model.GlycMTAC
     
     #Minimize the AIC
     model.objective = Objective(rule = objective_rule, sense = minimize)
@@ -511,6 +533,7 @@ def Superstructure_model(Superstructure):
       model.RMC.display()
       model.OMC.display()
       model.BDP.display()
+      model.MTAC.display()
       model.GlycCost.display()
       model.GlycMTAC.display()
     
