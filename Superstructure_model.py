@@ -61,6 +61,7 @@ def Superstructure_model(Superstructure):
     model.MagnesolWashOC = Param(initialize = 0.032, doc = 'Magnesol washing cost in $/l including filtering')
     model.IonExchangeOC = Param(initialize = 0.026, doc = 'Ion exchange washing cost in $/l for resins')
     model.FameDensity = Param(initialize = 0.8747, doc = 'Biodiesel density in kg/l')
+    model.GlycDensity = Param(initialize = 1.26, doc = 'Glycerol density in kg/l')
     #model.H = Param(initialize = 8000, doc = 'operating hours yearly')
     
     ##initialize variables
@@ -95,6 +96,7 @@ def Superstructure_model(Superstructure):
     
     model.IRCalc = Var(initialize = 0)
     model.WashingOC = Var(initialize = 0)
+    model.GlycWashingOC = Var(initialize = 0)
     
     
     
@@ -351,10 +353,15 @@ def Superstructure_model(Superstructure):
         """Calculation for management and operating costs"""
         return model.GlycOMC == 0.02 * model.GlycAIC
     
+    def GlycWashing_rule(model):
+        return model.GlycWashingOC == (model.flow_intot[8,1,3] + model.flow_intot[7,2,2]) * model.H * model.IonExchangeOC * model.GlycDensity
+    
+    model.GlycWashing_rule = Constraint(rule = GlycWashing_rule)
+    
     model.GlycOMC_rule = Constraint(rule = GlycOMC_rule)
     
     def GlycMTAC_rule(model):
-        return model.GlycMTAC == model.GlycAIC + model.GlycOMC - model.GlycCost
+        return model.GlycMTAC == model.GlycAIC + model.GlycOMC + model.GlycWashingOC - model.GlycCost
     
     model.GlycMTAC_rule = Constraint(rule = GlycMTAC_rule)
     
