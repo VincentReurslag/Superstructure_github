@@ -50,12 +50,18 @@ def Superstructure_model(Superstructure):
     model.CCost = Param(model.i, initialize = Superstructure.CCost_data, doc = 'Cost per kg for components used')
     model.UCost = Param(model.u, initialize = Superstructure.uCost_data, doc = 'Costs for utility usage')
     
-    model.FameSell = Param(initialize = 50, doc = 'biodiesel selling price')
-    model.GlycWaste = Param(initialize = -1, doc = 'Cost for glycerol waste')
-    model.GlycSell1 = Param(initialize = 5, doc = 'Selling upgraded glycerol 80%')
-    model.GlycSell2 = Param(initialize = 0, doc = 'Selling upgraded glycerol 99%')
-    model.GlycSell3 = Param(initialize = 30, doc = 'Selling upgraded glycerol 99.9%')
+    model.FameSell = Param(initialize = 0.50, doc = 'biodiesel selling price')
+    model.GlycWaste = Param(initialize = -0.015, doc = 'Cost for glycerol waste')
+    model.GlycSell1 = Param(initialize = 0.17, doc = 'Selling upgraded glycerol 80%')
+    model.GlycSell2 = Param(initialize = 0.895, doc = 'Selling upgraded glycerol 99%')
+    model.GlycSell3 = Param(initialize = 1.275, doc = 'Selling upgraded glycerol 99.9%')
     
+    
+    model.WaterWashingOC = Param(initialize = 0.021, doc = 'Water washing cost in $/l including waste disposal')
+    model.MagnesolWashOC = Param(initialize = 0.032, doc = 'Magnesol washing cost in $/l including filtering')
+    model.IonExchangeOC = Param(initialize = 0.026, doc = 'Ion exchange washing cost in $/l for resins')
+    model.FameDensity = Param(initialize = 0.8747, doc = 'Biodiesel density in kg/l')
+    #model.H = Param(initialize = 8000, doc = 'operating hours yearly')
     
     ##initialize variables
     model.flow_in = Var(model.a, model.j, model.k, model.i, bounds = (0,None), initialize = 0, doc = 'Ingoing flow at every equipment for every component')
@@ -88,6 +94,8 @@ def Superstructure_model(Superstructure):
     model.GlycCost = Var(initialize = 0, doc = 'Profit or loss made from glyceol waste or byproduct')
     
     model.IRCalc = Var(initialize = 0)
+    model.WashingOC = Var(initialize = 0)
+    
     
     
     
@@ -113,10 +121,6 @@ def Superstructure_model(Superstructure):
     model.HX_rule = Constraint(model.a, rule = HX_rule)
     model.dT_rule1 = Constraint(model.a, rule = dT_rule1)
 
-    
-    
-    
-    
     
     
     
@@ -318,9 +322,9 @@ def Superstructure_model(Superstructure):
 
     
     def GlycCost_rule(model):
-        return model.GlycCost ==  model.flow_outtot[8,1,1] * model.GlycWaste + (model.flow_outtot[8,1,2] + model.flow_outtot[8,2,1]) * model.GlycSell1 + \
-               (model.flow_outtot[8,1,3] + model.flow_outtot[8,2,2] + model.flow_outtot[8,3,1]) * model.GlycSell2 + \
-               (model.flow_outtot[8,2,3] + model.flow_outtot[8,3,2]) * model.GlycSell3
+        return model.GlycCost ==  (model.flow_inout[8,1,1,3] * model.GlycWaste + (model.flow_inout[8,1,2,3] + model.flow_inout[8,2,1,3]) * model.GlycSell1 + \
+               (model.flow_inout[8,1,3,3] + model.flow_inout[8,2,2,3] + model.flow_inout[8,3,1,3]) * model.GlycSell2 + \
+               (model.flow_inout[8,2,3,3] + model.flow_inout[8,3,2,3]) * model.GlycSell3) * model.H
         
     model.GlycCost_rule = Constraint(rule = GlycCost_rule)
     
@@ -350,7 +354,7 @@ def Superstructure_model(Superstructure):
     model.GlycOMC_rule = Constraint(rule = GlycOMC_rule)
     
     def GlycMTAC_rule(model):
-        return model.GlycMTAC == model.GlycAIC + model.GlycRMC + model.GlycOMC - model.GlycCost
+        return model.GlycMTAC == model.GlycAIC + model.GlycOMC - model.GlycCost
     
     model.GlycMTAC_rule = Constraint(rule = GlycMTAC_rule)
     
@@ -485,9 +489,16 @@ def Superstructure_model(Superstructure):
     
     model.OMC_rule = Constraint(rule = OMC_rule)
     
+    def WashingOC_rule(model):
+        return model.WashingOC == ( (model.flow_intot[3,1,1] + model.flow_intot[3,3,1] + model.flow_intot[4,2,1]) * model.FameDensity * model.WaterWashingOC + \
+           (model.flow_intot[3,1,2] + model.flow_intot[3,3,2] + model.flow_intot[4,2,2]) * model.FameDensity * model.MagnesolWashOC + \
+           (model.flow_intot[3,1,3] + model.flow_intot[3,3,3] + model.flow_intot[4,2,3]) * model.FameDensity * model.IonExchangeOC) * model.H
+               
+    model.WahsingOC_rule = Constraint(rule = WashingOC_rule)
+    
     def MTAC_rule(model):
         """Modified total annualized cost"""
-        return model.MTAC == model.AIC + model.RMC + model.OMC - model.BDP * model.FameSell
+        return model.MTAC == model.AIC + model.OMC + model.WashingOC - model.BDP
     
     model.MTAC_rule = Constraint(rule = MTAC_rule)
     
@@ -495,7 +506,7 @@ def Superstructure_model(Superstructure):
     #MISC calculations 
     def BDP_rule(model):
         """Determine how much  biodiesel is produced at the final stage"""
-        return model.BDP == model.flow_inout[5,1,1,1]
+        return model.BDP == model.flow_inout[5,1,1,1] * model.FameSell * model.H
     
     model.BDP_rule = Constraint(rule = BDP_rule, doc = 'Biodiesel produced')
     
@@ -536,7 +547,7 @@ def Superstructure_model(Superstructure):
       model.MTAC.display()
       model.GlycCost.display()
       model.GlycMTAC.display()
-    
+      model.WashingOC.display()
     
     # This emulates what the pyomo command-line tools does
     from pyomo.opt import SolverFactory
