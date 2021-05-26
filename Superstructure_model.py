@@ -573,6 +573,18 @@ def Superstructure_model(Superstructure):
     def HotU_rule(model,hi):
         return model.dH[hi] + sum(model.Y[x] * model.HotU_values[x] for x in model.x) >= 0
         
+    model.HotU = Var()
+    model.ColdU = Var()
+    
+    def HotU_calc(model):
+        return model.HotU == sum(model.Y[x] * model.HotU_values[x] for x in model.x)
+    
+    def ColdU_calc(model):
+        return model.ColdU == model.dH[4] + model.HotU
+    
+    model.HotU_calc = Constraint(rule = HotU_calc)
+    model.ColdU_calc = Constraint(rule = ColdU_calc)
+    
     def Y_rule(model):
         return sum(model.Y[x] for x in model.x) == 1
     
@@ -612,6 +624,8 @@ def Superstructure_model(Superstructure):
       model.WashingOC.display()
       model.dH.display()	
       model.CPtot.display()
+      model.HotU.display()
+      model.ColdU.display()
       
     # This emulates what the pyomo command-line tools does
     from pyomo.opt import SolverFactory
