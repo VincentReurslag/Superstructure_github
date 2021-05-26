@@ -18,6 +18,8 @@ def Superstructure_model(Superstructure):
     model.k = Set(initialize = Superstructure.k, doc = 'AIChnology options')
     model.i = Set(initialize = Superstructure.i, doc = 'Species in reaction mixture')
     model.u = Set(initialize = Superstructure.u, doc = 'Utilities considered')
+    model.hi = Set(initialize = [1,2,3,4])
+    model.x = Set(initialize = [1,2,3,4,5,6,7,8,9,10])
     
     
     #initialize parameters. The data comes from the created Superstructure class
@@ -78,6 +80,7 @@ def Superstructure_model(Superstructure):
     model.HX = Var(model.a, bounds = (None , None), initialize = 0, doc = 'Heat Exchanger cooling and heating duties')
     model.TOT_Utility = Var(model.a, model.j, model.k, model.u, bounds = (0 , None), initialize = 0, doc = 'Simply Utility + HX for total utility usage')
     model.dT = Var(model.a, bounds = (None, None), initialize = 0, doc = 'Temperature difference between stages for HX calculations')
+    model.dT1 = Var(model.a, bounds = (None, None), initialize = 0, doc = 'Temperature difference between stages for HX calculations')
     model.W = Var(model.a, model.j, model.k, model.i, bounds = (0, None), initialize = 0, doc = 'Waste streams from unit operations which are used for downstream processing')
     
     
@@ -98,6 +101,16 @@ def Superstructure_model(Superstructure):
     model.WashingOC = Var(initialize = 0)
     model.GlycWashingOC = Var(initialize = 0)
     
+    model.CP = Param(model.i, initialize = Superstructure.CP_data)
+    model.CPtot = Var(model.a, model.j)
+    model.CP0 = Var()
+    model.S = Param(model.hi, initialize = {1:10, 2:30, 3:35, 4:10})
+    model.dH = Var(model.hi)
+    model.HotU_values = Param(model.x, initialize =  {1:20000, 2:22000, 3:24000, 4:26000, 5:28000, 6:30000, 7:32000, 8:34000, 9:36000, 10:38000})
+    model.Y = Var(model.x, domain = Binary)
+    
+    
+    
     
     
     
@@ -114,6 +127,12 @@ def Superstructure_model(Superstructure):
         elif a in [1,6]:
             return model.dT[a] == (sum(model.Temp[a,j,k] * model.y[a,j,k] for j in model.j for k in model.k) - model.T0)
 
+    def dT_rule1(model,a):
+        """Using dT = Temp_data[a] * y - Temp_[a-1] * y and taking the sum to find the temperatures"""
+        return model.dT1[a] == sum(model.Temp[a,j,k] * model.y[a,j,k] for j in model.j for k in model.k)
+
+
+     
         
     def HX_rule(model, a):
         return model.HX[a] == model.dT[a] * sum(model.flow_instage[a,i] for i in model.i)
@@ -503,6 +522,9 @@ def Superstructure_model(Superstructure):
                
     model.WahsingOC_rule = Constraint(rule = WashingOC_rule)
     
+    
+    
+    
     def MTAC_rule(model):
         """Modified total annualized cost"""
         return model.MTAC == model.AIC + model.OMC + model.WashingOC - model.BDP
@@ -520,15 +542,48 @@ def Superstructure_model(Superstructure):
 
 
 
+    def CPtot_rule(model,a,j):
+        return model.CPtot[a,j] == sum(model.flow_inout[a,j,k,i] * model.CP[i] for k in model.k for i in model.i)
+    
+    def CP0_rule(model):
+        return model.CP0 == sum(model.flow_in0[i] * model.CP[i] for i in model.i)
+    
+    
+    model.CPtot_rule = Constraint(model.a,model.j,rule = CPtot_rule)
+    model.CP0_rule = Constraint(rule = CP0_rule)
 
-
-
-
+    
+    def dH1_rule(model):
+        return model.dH[1] == model.S[1] * (-model.CP0 - model.CPtot[1,1] - model.CPtot[3,1] - model.CPtot[4,2] - model.CPtot[4,3])
+    
+    def dH2_rule(model):
+        return model.dH[2] == model.dH[1] +  model.S[2] * (-model.CP0 - model.CPtot[1,1] - model.CPtot[3,1] - model.CPtot[4,2] - model.CPtot[4,3] + model.CPtot[1,2] + model.CPtot[2,2] + model.CPtot[4,1] + model.CPtot[5,1])
+    
+    def dH3_rule(model):
+        return model.dH[3] == model.dH[2] +  model.S[3] * (-model.CPtot[2,4] - model.CPtot[3,2] + model.CPtot[1,2] + model.CPtot[4,1] + model.CPtot[5,1])
+    
+    def dH4_rule(model):
+        return model.dH[4] == model.dH[3] +  model.S[4] * (model.CPtot[1,2] + model.CPtot[4,1] + model.CPtot[5,1])
+    
+    model.dH1_rule = Constraint(rule = dH1_rule)
+    model.dH2_rule = Constraint(rule = dH2_rule)
+    model.dH3_rule = Constraint(rule = dH3_rule)
+    model.dH4_rule = Constraint(rule = dH4_rule)
+    
+    def HotU_rule(model,hi):
+        return model.dH[hi] + sum(model.Y[x] * model.HotU_values[x] for x in model.x) >= 0
+        
+    def Y_rule(model):
+        return sum(model.Y[x] for x in model.x) == 1
+    
+    model.HotU_rule = Constraint(model.hi, rule = HotU_rule)
+    model.Y_rule = Constraint(rule = Y_rule)
 
     #Objective function
     def objective_rule(model):
         """Objective is to minimize cost (AIC)"""
-        return model.MTAC + model.GlycMTAC
+        return model.MTAC + model.GlycMTAC + sum(model.Y[x] * model.HotU_values[x] for x in model.x)
+    
     
     #Minimize the AIC
     model.objective = Objective(rule = objective_rule, sense = minimize)
@@ -545,7 +600,7 @@ def Superstructure_model(Superstructure):
     #Result processing and calling the solver
     def pyomo_postprocess(options=None, instance=None, results=None):
       model.flow_intot.display()
-      model.dT.display()
+      model.dT1.display()
       model.AIC.display()
       model.TUC.display()
       model.RMC.display()
@@ -555,7 +610,9 @@ def Superstructure_model(Superstructure):
       model.GlycCost.display()
       model.GlycMTAC.display()
       model.WashingOC.display()
-    
+      model.dH.display()	
+      model.CPtot.display()
+      
     # This emulates what the pyomo command-line tools does
     from pyomo.opt import SolverFactory
     import pyomo.environ
