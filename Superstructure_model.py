@@ -18,7 +18,7 @@ def Superstructure_model(Superstructure):
     model.k = Set(initialize = Superstructure.k, doc = 'AIChnology options')
     model.i = Set(initialize = Superstructure.i, doc = 'Species in reaction mixture')
     model.u = Set(initialize = Superstructure.u, doc = 'Utilities considered')
-    model.hi = Set(initialize = [1,2,3,4])
+    model.hi = Set(initialize = [1,2,3,4,5])
     model.x = Set(initialize = [1,2,3,4,5,6,7,8,9,10])
     
     
@@ -41,7 +41,7 @@ def Superstructure_model(Superstructure):
     model.ub = Param(initialize = 1000, doc = 'upper blow bound in main superstructure to approximate exponential function')
     model.lbGlyc = Param(initialize = 50, doc = 'Lower flow bound in Glycerol superstructure')
     model.ubGlyc = Param(initialize = 150, doc = 'Upper flow bound in glycerol superstrucuture')
-    model.T0 = Param(initialize = 20, doc = 'Starting temperature of incoming flow from the reactor')
+    model.T0 = Param(initialize = 60, doc = 'Starting temperature of incoming flow from the reactor')
     
     model.K_eng = Param(initialize = 3.3, doc = 'Coefficient for engineering and planning')
     model.IR = Param(initialize = 0.1, doc = 'Interest Rate on investment')
@@ -106,7 +106,7 @@ def Superstructure_model(Superstructure):
     model.CP = Param(model.i, initialize = Superstructure.CP_data)
     model.CPtot = Var(model.a, model.j)
     model.CP0 = Var()
-    model.S = Param(model.hi, initialize = {1:10, 2:30, 3:35, 4:10})
+    model.S = Param(model.hi, initialize = {1:10, 2:30, 3:10, 4:25, 5:10})
     model.dH = Var(model.hi)
  
     
@@ -128,9 +128,6 @@ def Superstructure_model(Superstructure):
         elif a in [1,6]:
             return model.dT[a] == (sum(model.Temp[a,j,k] * model.y[a,j,k] for j in model.j for k in model.k) - model.T0)
 
-    def dT_rule1(model,a):
-        """Using dT = Temp_data[a] * y - Temp_[a-1] * y and taking the sum to find the temperatures"""
-        return model.dT1[a] == sum(model.Temp[a,j,k] * model.y[a,j,k] for j in model.j for k in model.k)
 
 
      
@@ -569,6 +566,19 @@ def Superstructure_model(Superstructure):
     model.CPtot_rule1 = Constraint(model.a,model.j,rule = CPtot_rule1)
     model.CP0_rule1 = Constraint(rule = CP0_rule1)
     model.CP0_rule2 = Constraint(rule = CP0_rule2)
+    """
+    def dH1_rule(model):
+        return model.dH[1] == model.S[1] * (-model.CP0_2 - model.CPin[2,2] - model.CPtot[3,1] - model.CPtot[4,2] - model.CPtot[4,3])
+    
+    def dH2_rule(model):
+        return model.dH[2] == model.dH[1] +  model.S[2] * (-model.CP0_2 - model.CPin[2,2] + model.CPin[2,3] + model.CPin[2,4]  + model.CPtot[2,2] - model.CPtot[3,1]  - model.CPtot[4,2] - model.CPtot[4,3] + model.CPtot[5,1])
+    
+    def dH3_rule(model):
+        return model.dH[3] == model.dH[2] +  model.S[3] * (model.CP0_1 - model.CPin[2,2] + model.CPin[2,3] + model.CPin[2,4] - model.CPtot[2,1] + model.CPtot[2,2] - model.CPtot[2,4] - model.CPtot[3,2] + model.CPtot[3,3] + model.CPtot[4,1] - model.CPtot[4,3] + model.CPtot[5,1])
+    
+    def dH4_rule(model):
+        return model.dH[4] == model.dH[3] +  model.S[4] * (model.CP0_1 + model.CPin[2,3] + model.CPin[2,4] + model.CPtot[2,2] + model.CPtot[3,3] + model.CPtot[4,1] + model.CPtot[5,1])
+    """
     
     def dH1_rule(model):
         """What streams belong to the first temperature inteval"""
@@ -576,27 +586,36 @@ def Superstructure_model(Superstructure):
     
     def dH2_rule(model):
         """What streams belong to the second temperature inteval"""
-        return model.dH[2] == model.dH[1] +  model.S[2] * (-model.CP0_2 - model.CPin[2,2] + model.CPin[2,3] + model.CPin[2,4]  + model.CPtot[2,2] - model.CPtot[3,1]  - model.CPtot[4,2] - model.CPtot[4,3] + model.CPtot[5,1])
+        return model.dH[2] == model.dH[1] +  model.S[2] * (-model.CP0_2 - model.CPin[2,2] + model.CPin[2,3] + model.CPin[2,4]  + model.CPtot[2,2] - model.CPtot[3,1]  + model.CPtot[4,1] - model.CPtot[4,2] - model.CPtot[4,3] + model.CPtot[5,1])
     
     def dH3_rule(model):
-        """What streams belong to the third temperature inteval"""
-        return model.dH[3] == model.dH[2] +  model.S[3] * (model.CP0_1 - model.CPin[2,2] + model.CPin[2,3] + model.CPin[2,4] - model.CPtot[2,1] + model.CPtot[2,2] - model.CPtot[2,4] - model.CPtot[3,2] + model.CPtot[3,3] + model.CPtot[4,1] - model.CPtot[4,3] + model.CPtot[5,1])
+        """What streams belong to the second temperature inteval"""
+        return model.dH[3] == model.dH[2] +  model.S[3] * (-model.CPin[2,2] + model.CPin[2,3] + model.CPin[2,4] - model.CPtot[2,1] + model.CPtot[2,2] - model.CPtot[2,4] - model.CPtot[3,2] + model.CPtot[4,1] - model.CPtot[4,3] + model.CPtot[5,1])
     
     def dH4_rule(model):
+        """What streams belong to the third temperature inteval"""
+        return model.dH[4] == model.dH[3] +  model.S[4] * (model.CP0_1 - model.CPin[2,2] + model.CPin[2,3] + model.CPin[2,4] - model.CPtot[2,1] + model.CPtot[2,2] - model.CPtot[2,4] - model.CPtot[3,2] + model.CPtot[3,3] + model.CPtot[4,1] - model.CPtot[4,3] + model.CPtot[5,1])
+    
+    def dH5_rule(model):
         """What streams belong to the fourth temperature inteval"""
-        return model.dH[4] == model.dH[3] +  model.S[4] * (model.CP0_1 + model.CPin[2,3] + model.CPin[2,4] + model.CPtot[2,2] + model.CPtot[3,3] + model.CPtot[4,1] + model.CPtot[5,1])
+        return model.dH[5] == model.dH[4] +  model.S[5] * (model.CP0_1 + model.CPin[2,3] + model.CPin[2,4] + model.CPtot[2,2] + model.CPtot[3,3] + model.CPtot[4,1] + model.CPtot[5,1])
+    
+    
+    
+    
     
     model.dH1_rule = Constraint(rule = dH1_rule)
     model.dH2_rule = Constraint(rule = dH2_rule)
     model.dH3_rule = Constraint(rule = dH3_rule)
     model.dH4_rule = Constraint(rule = dH4_rule)
-    
+    model.dH5_rule = Constraint(rule = dH5_rule)
+
     
     def HotU_rule(model,hi):
         return model.dH[hi] + model.HotU >= 0
 
     def ColdU_calc(model):
-        return model.ColdU == model.dH[4] + model.HotU
+        return model.ColdU == model.dH[5] + model.HotU
     
     model.HotU_rule = Constraint(model.hi, rule = HotU_rule)
     model.ColdU_calc = Constraint(rule = ColdU_calc)
@@ -604,7 +623,7 @@ def Superstructure_model(Superstructure):
     #Objective function
     def objective_rule(model):
         """Objective is to minimize cost (AIC)"""
-        return model.MTAC + model.GlycMTAC + model.HotU + model.ColdU
+        return model.MTAC + model.GlycMTAC + model.ColdU + model.HotU 
     
     
     #Minimize the AIC
@@ -632,6 +651,7 @@ def Superstructure_model(Superstructure):
       model.CPtot.display()
       model.HotU.display()
       model.ColdU.display()
+      model.HX.display()
       
     # This emulates what the pyomo command-line tools does
     from pyomo.opt import SolverFactory
