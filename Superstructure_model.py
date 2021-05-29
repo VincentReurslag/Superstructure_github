@@ -19,7 +19,6 @@ def Superstructure_model(Superstructure):
     model.i = Set(initialize = Superstructure.i, doc = 'Species in reaction mixture')
     model.u = Set(initialize = Superstructure.u, doc = 'Utilities considered')
     model.hi = Set(initialize = [1,2,3,4,5])
-    model.x = Set(initialize = [1,2,3,4,5,6,7,8,9,10])
     
     
     #initialize parameters. The data comes from the created Superstructure class
@@ -566,19 +565,8 @@ def Superstructure_model(Superstructure):
     model.CPtot_rule1 = Constraint(model.a,model.j,rule = CPtot_rule1)
     model.CP0_rule1 = Constraint(rule = CP0_rule1)
     model.CP0_rule2 = Constraint(rule = CP0_rule2)
-    """
-    def dH1_rule(model):
-        return model.dH[1] == model.S[1] * (-model.CP0_2 - model.CPin[2,2] - model.CPtot[3,1] - model.CPtot[4,2] - model.CPtot[4,3])
-    
-    def dH2_rule(model):
-        return model.dH[2] == model.dH[1] +  model.S[2] * (-model.CP0_2 - model.CPin[2,2] + model.CPin[2,3] + model.CPin[2,4]  + model.CPtot[2,2] - model.CPtot[3,1]  - model.CPtot[4,2] - model.CPtot[4,3] + model.CPtot[5,1])
-    
-    def dH3_rule(model):
-        return model.dH[3] == model.dH[2] +  model.S[3] * (model.CP0_1 - model.CPin[2,2] + model.CPin[2,3] + model.CPin[2,4] - model.CPtot[2,1] + model.CPtot[2,2] - model.CPtot[2,4] - model.CPtot[3,2] + model.CPtot[3,3] + model.CPtot[4,1] - model.CPtot[4,3] + model.CPtot[5,1])
-    
-    def dH4_rule(model):
-        return model.dH[4] == model.dH[3] +  model.S[4] * (model.CP0_1 + model.CPin[2,3] + model.CPin[2,4] + model.CPtot[2,2] + model.CPtot[3,3] + model.CPtot[4,1] + model.CPtot[5,1])
-    """
+
+
     
     def dH1_rule(model):
         """What streams belong to the first temperature inteval"""
@@ -599,9 +587,6 @@ def Superstructure_model(Superstructure):
     def dH5_rule(model):
         """What streams belong to the fourth temperature inteval"""
         return model.dH[5] == model.dH[4] +  model.S[5] * (model.CP0_1 + model.CPin[2,3] + model.CPin[2,4] + model.CPtot[2,2] + model.CPtot[3,3] + model.CPtot[4,1] + model.CPtot[5,1])
-    
-    
-    
     
     
     model.dH1_rule = Constraint(rule = dH1_rule)
@@ -637,7 +622,6 @@ def Superstructure_model(Superstructure):
     #Result processing and calling the solver
     def pyomo_postprocess(options=None, instance=None, results=None):
       model.flow_intot.display()
-      model.dT1.display()
       model.AIC.display()
       model.TUC.display()
       model.RMC.display()
