@@ -101,13 +101,14 @@ def Superstructure_model(Superstructure):
     model.WashingOC = Var(initialize = 0)
     model.GlycWashingOC = Var(initialize = 0)
     
+    model.HotU = Var()
+    model.ColdU = Var()
     model.CP = Param(model.i, initialize = Superstructure.CP_data)
     model.CPtot = Var(model.a, model.j)
     model.CP0 = Var()
     model.S = Param(model.hi, initialize = {1:10, 2:30, 3:35, 4:10})
     model.dH = Var(model.hi)
-    model.HotU_values = Param(model.x, initialize =  {1:20000, 2:22000, 3:24000, 4:26000, 5:28000, 6:30000, 7:32000, 8:34000, 9:36000, 10:38000})
-    model.Y = Var(model.x, domain = Binary)
+ 
     
     
     
@@ -422,10 +423,10 @@ def Superstructure_model(Superstructure):
         return sum(model.y[3,3,k] for k in model.k) - sum(model.y[4,3,k] for k in model.k) == 0
     
     def logic_rule10(model):
-        return sum(model.y[4,2,k] for k in model.k) + sum(model.y[4,3,k] for k in model.k) - model.y[5,1,1] == 0
+        return sum(model.y[4,2,k] for k in model.k) + sum(model.y[4,3,k] for k in model.k) - sum(model.y[5,1,k] for k in model.k) == 0
     
     def logic_rule11(model):
-        return sum(model.y[4,1,k] for k in model.k) - model.y[5,1,2] == 0
+        return sum(model.y[4,1,k] for k in model.k) - model.y[5,2,1] == 0
     
 
     model.logic1 = Constraint(rule = logic_rule1)
@@ -539,70 +540,75 @@ def Superstructure_model(Superstructure):
     
     model.BDP_rule = Constraint(rule = BDP_rule, doc = 'Biodiesel produced')
     
+    
+    model.CP0_2 = Var()
+    model.CP0_1 = Var()
 
+    
 
+    model.CPin = Var(model.a, model.j)
 
+    #Heat integration calculations
     def CPtot_rule(model,a,j):
+        """Determine heat capacity of flows""" 
         return model.CPtot[a,j] == sum(model.flow_inout[a,j,k,i] * model.CP[i] for k in model.k for i in model.i)
     
-    def CP0_rule(model):
-        return model.CP0 == sum(model.flow_in0[i] * model.CP[i] for i in model.i)
+    def CPtot_rule1(model,a,j):
+        """Determine heat capacity of flows""" 
+        return model.CPin[a,j] == sum(model.flow_in[a,j,k,i] * model.CP[i] for k in model.k for i in model.i)
     
+    def CP0_rule1(model):
+        """Heat capacity of incoming flow"""
+        return model.CP0_1 == sum(model.flow_in0[i] * model.CP[i] for i in model.i) * sum(model.y[1,1,k] for k in model.k)
+    
+    def CP0_rule2(model):
+        """Heat capacity of incoming flow"""
+        return model.CP0_2 == sum(model.flow_in0[i] * model.CP[i] for i in model.i) * sum(model.y[1,2,k] for k in model.k)
     
     model.CPtot_rule = Constraint(model.a,model.j,rule = CPtot_rule)
-    model.CP0_rule = Constraint(rule = CP0_rule)
-
+    model.CPtot_rule1 = Constraint(model.a,model.j,rule = CPtot_rule1)
+    model.CP0_rule1 = Constraint(rule = CP0_rule1)
+    model.CP0_rule2 = Constraint(rule = CP0_rule2)
     
     def dH1_rule(model):
-        return model.dH[1] == model.S[1] * (-model.CP0 - model.CPtot[1,1] - model.CPtot[3,1] - model.CPtot[4,2] - model.CPtot[4,3])
+        """What streams belong to the first temperature inteval"""
+        return model.dH[1] == model.S[1] * (-model.CP0_2 - model.CPin[2,2] - model.CPtot[3,1] - model.CPtot[4,2] - model.CPtot[4,3])
     
     def dH2_rule(model):
-        return model.dH[2] == model.dH[1] +  model.S[2] * (-model.CP0 - model.CPtot[1,1] - model.CPtot[3,1] - model.CPtot[4,2] - model.CPtot[4,3] + model.CPtot[1,2] + model.CPtot[2,2] + model.CPtot[4,1] + model.CPtot[5,1])
+        """What streams belong to the second temperature inteval"""
+        return model.dH[2] == model.dH[1] +  model.S[2] * (-model.CP0_2 - model.CPin[2,2] + model.CPin[2,3] + model.CPin[2,4]  + model.CPtot[2,2] - model.CPtot[3,1]  - model.CPtot[4,2] - model.CPtot[4,3] + model.CPtot[5,1])
     
     def dH3_rule(model):
-        return model.dH[3] == model.dH[2] +  model.S[3] * (-model.CPtot[2,4] - model.CPtot[3,2] + model.CPtot[1,2] + model.CPtot[4,1] + model.CPtot[5,1])
+        """What streams belong to the third temperature inteval"""
+        return model.dH[3] == model.dH[2] +  model.S[3] * (model.CP0_1 - model.CPin[2,2] + model.CPin[2,3] + model.CPin[2,4] - model.CPtot[2,1] + model.CPtot[2,2] - model.CPtot[2,4] - model.CPtot[3,2] + model.CPtot[3,3] + model.CPtot[4,1] - model.CPtot[4,3] + model.CPtot[5,1])
     
     def dH4_rule(model):
-        return model.dH[4] == model.dH[3] +  model.S[4] * (model.CPtot[1,2] + model.CPtot[4,1] + model.CPtot[5,1])
+        """What streams belong to the fourth temperature inteval"""
+        return model.dH[4] == model.dH[3] +  model.S[4] * (model.CP0_1 + model.CPin[2,3] + model.CPin[2,4] + model.CPtot[2,2] + model.CPtot[3,3] + model.CPtot[4,1] + model.CPtot[5,1])
     
     model.dH1_rule = Constraint(rule = dH1_rule)
     model.dH2_rule = Constraint(rule = dH2_rule)
     model.dH3_rule = Constraint(rule = dH3_rule)
     model.dH4_rule = Constraint(rule = dH4_rule)
     
+    
     def HotU_rule(model,hi):
-        return model.dH[hi] + sum(model.Y[x] * model.HotU_values[x] for x in model.x) >= 0
-        
-    model.HotU = Var()
-    model.ColdU = Var()
-    
-    def HotU_calc(model):
-        return model.HotU == sum(model.Y[x] * model.HotU_values[x] for x in model.x)
-    
+        return model.dH[hi] + model.HotU >= 0
+
     def ColdU_calc(model):
         return model.ColdU == model.dH[4] + model.HotU
     
-    model.HotU_calc = Constraint(rule = HotU_calc)
-    model.ColdU_calc = Constraint(rule = ColdU_calc)
-    
-    def Y_rule(model):
-        return sum(model.Y[x] for x in model.x) == 1
-    
     model.HotU_rule = Constraint(model.hi, rule = HotU_rule)
-    model.Y_rule = Constraint(rule = Y_rule)
+    model.ColdU_calc = Constraint(rule = ColdU_calc)
 
     #Objective function
     def objective_rule(model):
         """Objective is to minimize cost (AIC)"""
-        return model.MTAC + model.GlycMTAC + sum(model.Y[x] * model.HotU_values[x] for x in model.x)
+        return model.MTAC + model.GlycMTAC + model.HotU + model.ColdU
     
     
     #Minimize the AIC
     model.objective = Objective(rule = objective_rule, sense = minimize)
-    
-    
-    
-    
     
     
     
