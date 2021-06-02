@@ -513,9 +513,9 @@ def Superstructure_model(Superstructure):
     model.OMC_rule = Constraint(rule = OMC_rule)
     
     def WashingOC_rule(model):
-        return model.WashingOC == ( (model.flow_intot[3,1,1] + model.flow_intot[3,3,1] + model.flow_intot[4,2,1]) * model.FameDensity * model.WaterWashingOC + \
-           (model.flow_intot[3,1,2] + model.flow_intot[3,3,2] + model.flow_intot[4,2,2]) * model.FameDensity * model.MagnesolWashOC + \
-           (model.flow_intot[3,1,3] + model.flow_intot[3,3,3] + model.flow_intot[4,2,3]) * model.FameDensity * model.IonExchangeOC) * model.H
+        return model.WashingOC == ( (model.flow_intot[3,1,1] + model.flow_intot[4,3,1] + model.flow_intot[4,2,1]) * model.FameDensity * model.WaterWashingOC + \
+           (model.flow_intot[3,1,2] + model.flow_intot[4,2,2]) * model.FameDensity * model.MagnesolWashOC + \
+           (model.flow_intot[3,1,3] + model.flow_intot[4,2,3]) * model.FameDensity * model.IonExchangeOC) * model.H
                
     model.WahsingOC_rule = Constraint(rule = WashingOC_rule)
     
@@ -578,15 +578,15 @@ def Superstructure_model(Superstructure):
     
     def dH3_rule(model):
         """What streams belong to the second temperature inteval"""
-        return model.dH[3] == model.dH[2] +  model.S[3] * (-model.CPin[2,2] + model.CPin[2,3] + model.CPin[2,4] - model.CPtot[2,1] + model.CPtot[2,2] - model.CPtot[2,4] - model.CPtot[3,2] + model.CPtot[4,1] - model.CPtot[4,3] + model.CPtot[5,1])
+        return model.dH[3] == model.dH[2] +  model.S[3] * (-model.CPin[2,2] + model.CPin[2,3] + model.CPin[2,4] - model.CPtot[2,1] + model.CPtot[2,2] - model.CPtot[2,4] - model.CPtot[3,2] + model.CPtot[4,1] + model.CPtot[5,1])
     
     def dH4_rule(model):
         """What streams belong to the third temperature inteval"""
-        return model.dH[4] == model.dH[3] +  model.S[4] * (model.CP0_1 - model.CPin[2,2] + model.CPin[2,3] + model.CPin[2,4] - model.CPtot[2,1] + model.CPtot[2,2] - model.CPtot[2,4] - model.CPtot[3,2] + model.CPtot[3,3] + model.CPtot[4,1] - model.CPtot[4,3] + model.CPtot[5,1])
+        return model.dH[4] == model.dH[3] +  model.S[4] * (model.CP0_1 - model.CPin[2,2] + model.CPin[2,3] + model.CPin[2,4] - model.CPtot[2,1] + model.CPtot[2,2] - model.CPtot[2,4] - model.CPtot[3,2] + model.CPtot[4,1] + model.CPtot[5,1])
     
     def dH5_rule(model):
         """What streams belong to the fourth temperature inteval"""
-        return model.dH[5] == model.dH[4] +  model.S[5] * (model.CP0_1 + model.CPin[2,3] + model.CPin[2,4] + model.CPtot[2,2] + model.CPtot[3,3] + model.CPtot[4,1] + model.CPtot[5,1])
+        return model.dH[5] == model.dH[4] +  model.S[5] * (model.CP0_1 + model.CPin[2,3] + model.CPin[2,4] + model.CPtot[2,2] + model.CPtot[4,1] + model.CPtot[5,1])
     
     
     model.dH1_rule = Constraint(rule = dH1_rule)
