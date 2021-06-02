@@ -22,20 +22,18 @@ def flatten_dict(d):
     return dict(items())
 
 class Superstructure:
-    def __init__(self, xlsx_file):
+    def __init__(self, xlsx_file,a,j,k):
         """Initializes the superstructure by getting the indices j,k,i,u and corresponding names
         NOTE: Leave the excel tabs empty besides the corresponding tables"""
 
-        df = pd.read_excel(xlsx_file,'Superstructure j,k')
-        j = list(df.iloc[0,2:])
-        k = list(df.iloc[1:,1])
+        df = pd.read_excel(xlsx_file,'Superstructure a,j,k')
         equipment_names = df.iloc[1:, 2:]
         
         
         equipment_names.index = k
-        equipment_names.columns = j
+        equipment_names.columns = pd.MultiIndex.from_product([a,j])
         equipment_names.index.name = 'k'
-        equipment_names.columns.name = 'j'
+        equipment_names.columns.names = ['a','j']
         
         df = pd.read_excel(xlsx_file,'Components i')
         i = list(df.iloc[1:,0])
@@ -48,7 +46,8 @@ class Superstructure:
         utilities_names = df.iloc[1:,1]
         utilities_names.index = u
         utilities_names.index.name = 'u'
-    
+        
+        self.a = a
         self.j = j
         self.k = k
         self.i = i
@@ -57,36 +56,77 @@ class Superstructure:
         self.component_names = component_names
         self.utilities_names = utilities_names
         
-    def get_SF(self,xlsx_file):
-        df = pd.read_excel(xlsx_file, 'SF j,k,i')
-        SF_data = df.iloc[2:,2:]
-        columns = pd.MultiIndex.from_product([self.j,self.k])
-        SF_data.columns = columns
-        SF_data.index = self.i
-        SF_data.columns.names = ['j','k']
-        SF_data.index.name = 'i'
-        SF_data = SF_data.to_dict()
-        SF_data = flatten_dict(SF_data)
-        self.SF_data = SF_data
+    def get_4index(self,xlsx_file,sheets):
+        for sheet in sheets:
+            df = pd.read_excel(xlsx_file, sheet)
+            df = df.iloc[2:,2:]
+            columns = pd.MultiIndex.from_product([self.a,self.j,self.k])
+            df.columns = columns
+            df.columns.names = ['a','j','k']
+            
+            if sheet in sheets[0:2]: 
+                df.index = self.i
+                df.index.name = 'i'
+            elif sheet in sheets[2:]:
+                df.index = self.u
+                df.index.name = 'u'
+            
+            df = df.to_dict()
+            df = flatten_dict(df)
+            
+            if sheet == 'SF a,j,k,i':
+                self.SF_data = df
+            elif sheet == 'Q a,j,k,i':
+                self.Q_data = df
+            elif sheet == 'Tau a,j,k,u':
+                self.Tau_data = df
+    
+    
+    def get_3index(self,xlsx_file,sheets):
+        for sheet in sheets:
+            df = pd.read_excel(xlsx_file, sheet)
+            df = df.iloc[1:,2:]
+            df.columns = pd.MultiIndex.from_product([self.a,self.j])
+            df.index = self.k
+            df.columns.names = ['a','j']
+            df.index.name = 'k'
+            df = df.to_dict()
+            df = flatten_dict(df)
+            
+            if sheet == 'EC a,j,k':
+                self.EC_data = df
+            elif sheet == 'Temperature a,j,k':
+                self.Temp_data = df
+            elif sheet == 'ReferenceCost a,j,k':
+                self.RefCost_data = df
+            elif sheet == 'ReferenceSize a,j,k':
+                self.RefSize_data = df
+            elif sheet == 'ReferenceIndex a,j,k':
+                self.RefIndex_data = df
+            elif sheet == 'SizingFactor a,j,k':
+                self.Sizing_data = df
         
-    def get_EC(self,xlsx_file):
-        df = pd.read_excel(xlsx_file, 'EC j,k')
-        EC_data = df.iloc[1:,2:]
-        EC_data.columns = self.j
-        EC_data.index = self.k
-        EC_data.columns.name = 'j'
-        EC_data.index.name = 'k'
-        EC_data = EC_data.to_dict()
-        EC_data = flatten_dict(EC_data)
-        self.EC_data = EC_data
-        
-    def get_F0(self,xlsx_file):
-        df = pd.read_excel(xlsx_file, 'Flow0 i')
-        F0_data = df.iloc[1:,2]
-        F0_data.index = self.i
-        F0_data.index.name = 'i'
-        F0_data = F0_data.to_dict()
-        self.F0_data = F0_data
+    def get_1index(self,xlsx_file,sheets):
+        for sheet in sheets:
+            df = pd.read_excel(xlsx_file, sheet)
+            df = df.iloc[1:,2]
+            if sheet in sheets[0:3]:
+                df.index = self.i
+                df.index.name = 'i'
+            elif sheet in sheets[3:]:
+                df.index = self.u
+                df.index.name = 'u'
+    
+            df = df.to_dict()
+            if sheet == 'Flow0 i':
+                self.F0_data = df
+            elif sheet == 'CP i':
+                self.CP_data = df
+            elif sheet == 'CompCost i':
+                self.CCost_data = df
+            elif sheet == 'SpecificCostU u':
+                self.uCost_data = df
+    
         
     def get_results(self,model):
         """Get results from the pyomo model (Logic and flow data)"""

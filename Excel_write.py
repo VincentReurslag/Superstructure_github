@@ -25,14 +25,16 @@ def excel_write(Superstructure, output_file):
     step_row = 8
     row = np.arange(start_row, len(Superstructure.k)*step_row+start_row, step_row)
     
+    #Size of the data square for equpiment types that is colored
     h_size = 3
     v_size = 6
     
+    #Defining colors so I can use them easier later on
     green = PatternFill(start_color="00FF00", end_color="00FF00", fill_type = "solid")
     grey = PatternFill(start_color = "D3D3D3", end_color = "D3D3D3",  fill_type = "solid")
     blue = PatternFill(start_color = "00A0FF", end_color = "00A0FF",  fill_type = "solid")
     
-    
+    #Print objective function to the excel sheet
     cell = get_column_letter(start_col) + str(1)
     cell1 = get_column_letter(start_col+h_size) + str(1)
     sheet.merge_cells(cell + ':' + cell1)
@@ -67,7 +69,7 @@ def excel_write(Superstructure, output_file):
                 sheet[get_column_letter(col[j] + 1) + str(row[k]+i+2)] = Superstructure.Flow_data[j+1][k+1][i+1]
                 
             
-            #If an equipment is selected mark it yellow
+            #If an equipment is selected mark it green and grey
             if selected == 1:
                 sheet[cell].fill = green
                 
@@ -75,6 +77,7 @@ def excel_write(Superstructure, output_file):
                     for c in range(h_size + 1):
                         cell = get_column_letter(col[j] + c) + str(row[k]+r+1)
                         sheet[cell].fill = grey
-                    
+                        
     
     workbook.save(filename = filename)
+    
