@@ -63,7 +63,6 @@ def Superstructure_model(Superstructure):
     model.IonExchangeOC = Param(initialize = 0.026, doc = 'Ion exchange washing cost in $/l for resins')
     model.FameDensity = Param(initialize = 0.8747, doc = 'Biodiesel density in kg/l')
     model.GlycDensity = Param(initialize = 1.26, doc = 'Glycerol density in kg/l')
-    #model.H = Param(initialize = 8000, doc = 'operating hours yearly')
     
     ##initialize variables
     model.flow_in = Var(model.a, model.j, model.k, model.i, bounds = (0,None), initialize = 0, doc = 'Ingoing flow at every equipment for every component')
@@ -680,6 +679,13 @@ def Superstructure_model(Superstructure):
     pyomo_postprocess(None, model, results)
     
     return model
+
+
+
+
+
+
+
 
 
 
