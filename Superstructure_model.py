@@ -108,9 +108,20 @@ def Superstructure_model(Superstructure):
     model.S = Param(model.hi, initialize = {1:10, 2:30, 3:10, 4:25, 5:10})
     model.dH = Var(model.hi)
  
+    model.F0Cost = Var(doc = 'Cost of ingoing feed')
+    model.OilPrice = Param(initialize = 0.768, doc = 'price per kg of oil')
+    model.MeOHPrice = Param(initialize = 0.214, doc = 'price per kg of MeOH')
+    model.NaOHPrice = Param(initialize = 0.24, doc = 'price per kg of NaOH')
+    model.OilAmount = Param(initialize = 1050, doc = 'amount of oil feed to membrane system')
+    model.MeOHAmount= Param(initialize = 921, doc = 'amount of methanol to membrane system')
+    model.NaOHAmount = Param(initialize = 5.25, doc = 'amount of NaOH to membrane system')
     
+    model.H3PO4Price = Param(initialize = 6.58, doc = 'price of H3PO4 in eur/h')
+    model.H2SO4Price = Param(initialize = 8.03, doc = 'price of H2So4 in eur/h')
+    model.HCLPrice = Param(initialize = 7.36, doc = 'price of HCL in eur/h')
+    model.NeutPrice = Var()
     
-    
+
     
     
     
@@ -513,7 +524,7 @@ def Superstructure_model(Superstructure):
     model.OMC_rule = Constraint(rule = OMC_rule)
     
     def WashingOC_rule(model):
-        return model.WashingOC == ( (model.flow_intot[3,1,1] + model.flow_intot[4,3,1] + model.flow_intot[4,2,1]) * model.FameDensity * model.WaterWashingOC + \
+        return model.WashingOC == ( (model.flow_intot[3,1,1] + model.flow_intot[4,3,1] + model.flow_intot[4,2,1] + model.flow_intot[4,3,1]) * model.FameDensity * model.WaterWashingOC + \
            (model.flow_intot[3,1,2] + model.flow_intot[4,2,2]) * model.FameDensity * model.MagnesolWashOC + \
            (model.flow_intot[3,1,3] + model.flow_intot[4,2,3]) * model.FameDensity * model.IonExchangeOC) * model.H
                
@@ -535,6 +546,24 @@ def Superstructure_model(Superstructure):
         return model.BDP == model.flow_inout[5,1,1,1] * model.FameSell * model.H
     
     model.BDP_rule = Constraint(rule = BDP_rule, doc = 'Biodiesel produced')
+
+
+
+    def Flow0cost_rule(model):
+        return model.F0Cost == (model.OilAmount * model.OilPrice + model.MeOHAmount * model.MeOHPrice + model.NaOHAmount * model.NaOHPrice) * model.H
+    
+    model.Flow0cost_rule = Constraint(rule = Flow0cost_rule)
+    
+    
+    
+    
+    def Neutralization_rule(model):
+        return model.NeutPrice == ( (model.y[2,1,1] + model.y[2,4,1] + model.y[3,2,1]) * model.H3PO4Price \
+        + (model.y[2,1,2] + model.y[2,4,2] + model.y[3,2,2]) * model.H2SO4Price \
+        + (model.y[2,1,3] + model.y[2,4,3] + model.y[3,2,3]) * model.HCLPrice ) * model.H 
+                           
+    model.Neutralization_rule = Constraint(rule = Neutralization_rule)
+    
     
     
     model.CP0_2 = Var()
@@ -608,7 +637,7 @@ def Superstructure_model(Superstructure):
     #Objective function
     def objective_rule(model):
         """Objective is to minimize cost (AIC)"""
-        return model.MTAC + model.GlycMTAC + model.ColdU + model.HotU 
+        return model.MTAC + model.GlycMTAC + model.ColdU + model.HotU + model.F0Cost + model.NeutPrice
     
     
     #Minimize the AIC
@@ -636,6 +665,8 @@ def Superstructure_model(Superstructure):
       model.HotU.display()
       model.ColdU.display()
       model.HX.display()
+      model.F0Cost.display()
+      model.NeutPrice.display()
       
     # This emulates what the pyomo command-line tools does
     from pyomo.opt import SolverFactory
