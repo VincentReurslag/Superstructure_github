@@ -130,32 +130,68 @@ class Superstructure:
         
     def get_results(self,model):
         """Get results from the pyomo model (Logic and flow data)"""
-        Flow_data = {(j, k, i): value(flow) for (j, k, i), flow in model.flow.items()}
-        Flow_data = pd.DataFrame.from_dict(Flow_data, orient="index", columns=["variable value"])
-        Flow_data = Flow_data.values.reshape(len(self.j)*len(self.k),len(self.i)).transpose()
-        Flow_data = pd.DataFrame(Flow_data)
-        Flow_data.index = self.i
-        Flow_data.index.name = 'i'
-        columns = pd.MultiIndex.from_product([self.j,self.k])
-        Flow_data.columns = columns
-        Flow_data.columns.names = ['j','k']
+        from pyomo.core import ConcreteModel, Set, NonNegativeReals, Var, value
+        Flow_in = {(a, j, k, i): value(flow) for (a, j, k, i), flow in model.flow_in.items()}
+        Flow_in = pd.DataFrame.from_dict(Flow_in, orient="index", columns=["variable value"])
+        Flow_in = Flow_in.values.reshape(len(self.a)*len(self.j)*len(self.k),len(self.i)).transpose()
+        Flow_in = pd.DataFrame(Flow_in)
+        Flow_in.index = self.i
+        Flow_in.index.name = 'i'
+        columns = pd.MultiIndex.from_product([self.a,self.j,self.k])
+        Flow_in.columns = columns
+        Flow_in.columns.names = ['a','j','k']
         
         
-        Logic_data = {(j,k) : value(y) for (j, k), y in model.y.items()}
-        Logic_data = pd.DataFrame.from_dict(Logic_data, orient="index", columns=["variable value"])
-        Logic_data = Logic_data.values.reshape(len(self.j),len(self.k)).transpose()
-        Logic_data = pd.DataFrame(Logic_data)
-        Logic_data.index = self.k
-        Logic_data.index.name = 'k'
-        Logic_data.columns = self.j
-        Logic_data.columns.name = 'j'
-        
-        self.Flow_data = Flow_data
-        self.Logic_data = Logic_data
-        self.TEC = model.TEC.value
-    
+        Flow_intot = {(a, j, k): value(flow) for (a, j, k), flow in model.flow_intot.items()}
+        Flow_intot = pd.DataFrame.from_dict(Flow_intot, orient="index", columns=["variable value"])
+        Flow_intot = Flow_intot.values.reshape(len(self.a)*len(self.j)*len(self.k),1).transpose()
+        Flow_intot = pd.DataFrame(Flow_intot)
+        columns = pd.MultiIndex.from_product([self.a,self.j,self.k])
+        Flow_intot.columns = columns
+        Flow_intot.columns.names = ['a','j','k']
         
         
+        y = {(a, j, k): value(flow) for (a, j, k), flow in model.y.items()}
+        y = pd.DataFrame.from_dict(y, orient="index", columns=["variable value"])
+        y = y.values.reshape(len(self.a)*len(self.j)*len(self.k),1).transpose()
+        y = pd.DataFrame(y)
+        columns = pd.MultiIndex.from_product([self.a,self.j,self.k])
+        y.columns = columns
+        y.columns.names = ['a','j','k']
         
-
+        
+        CostCorr = {(a, j, k): value(flow) for (a, j, k), flow in model.CostCorr.items()}
+        CostCorr = pd.DataFrame.from_dict(CostCorr, orient="index", columns=["variable value"])
+        CostCorr = CostCorr.values.reshape(len(self.a)*len(self.j)*len(self.k),1).transpose()
+        CostCorr = pd.DataFrame(CostCorr)
+        columns = pd.MultiIndex.from_product([self.a,self.j,self.k])
+        CostCorr.columns = columns
+        CostCorr.columns.names = ['a','j','k']
+        
+        self.Flow_in = Flow_in
+        self.Flow_intot = Flow_intot
+        self.y = y
+        self.CostCorr = CostCorr
+        self.IR_LF = value(model.IRCalc)
+        self.AIC = value(model.AIC)
+        self.TUC = value(model.TUC)
+        self.RMC = value(model.RMC)
+        self.OMC = value(model.OMC)
+        self.WC = value(model.WashingOC)
+        self.BDP = value(model.BDP)
+        self.MTAC = value(model.MTAC)
+        
+        self.GlycAIC = value(model.GlycAIC)
+        self.GlycTUC = value(model.GlycTUC)
+        self.GlycRMC = value(model.GlycRMC)
+        self.GlycOMC = value(model.GlycOMC)
+        self.GlycWC = value(model.GlycWashingOC)
+        self.GlycTAR = value(model.GlycCost)
+        self.GlycMTAC = value(model.GlycMTAC)
+        
+        self.FeedCost = value(model.F0Cost)
+        self.HotU = value(model.HotU)
+        self.ColdU = value(model.ColdU)
+        
+        
 

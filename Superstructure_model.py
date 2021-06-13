@@ -73,7 +73,7 @@ def Superstructure_model(Superstructure):
     model.flow_inout = Var(model.a, model.j, model.k, model.i, bounds = (0, None), initialize = 0, doc = 'Main out flow from a unit operation')
     model.flow_outtot = Var(model.a, model.j, model.k, bounds = (0, None), initialize = 0, doc = 'Summed up for components outgoing flow from a unit operation')
     
-    model.CostCorr = Var(model.a,model.i,model.k, bounds = (0, None), initialize = 0, doc = 'Cost correction factor for economy of scale (C = RefCost * CostCorr)')
+    model.CostCorr = Var(model.a,model.j,model.k, bounds = (0, None), initialize = 0, doc = 'Cost correction factor for economy of scale (C = RefCost * CostCorr)')
     model.Utility = Var(model.a, model.j, model.k, model.u, bounds = (0 , None), initialize = 0, doc = 'Utility usages for all equipment and all utilities')
     model.HX = Var(model.a, bounds = (None , None), initialize = 0, doc = 'Heat Exchanger cooling and heating duties')
     model.TOT_Utility = Var(model.a, model.j, model.k, model.u, bounds = (0 , None), initialize = 0, doc = 'Simply Utility + HX for total utility usage')
@@ -359,7 +359,7 @@ def Superstructure_model(Superstructure):
     
     def GlycAIC_rule(model):
         """Annualized equipment costs using liftime and interest rates"""
-        return model.GlycAIC == sum(model.EC[a,j,k] * model.CostCorr[a,j,k] for a in [6,7,8] for j in model.j for k in model.k) * model.IRCalc * 1.05 * 5.93
+        return model.GlycAIC == sum(model.EC[a,j,k] * model.CostCorr[a,j,k] for a in [6,7,8] for j in model.j for k in model.k) * model.IRCalc
     
     model.GlycAIC_rule = Constraint(rule = GlycAIC_rule)
     
@@ -494,13 +494,13 @@ def Superstructure_model(Superstructure):
     model.EC_rule3 = Constraint(model.a, model.j, model.k, rule = EC_rule3)
     
     def IRCalc_rule(model):
-        return model.IRCalc == (model.IR * (model.IR + 1)**model.LT)/((model.IR + 1)**model.LT - 1)
+        return model.IRCalc == (model.IR * (model.IR + 1)**model.LT)/((model.IR + 1)**model.LT - 1) * 1.05 * 5.93
     
     model.IRCalc_rule = Constraint(rule = IRCalc_rule)
     
     def AIC_rule(model):
         """Annualized equipment costs using liftime and interest rates"""
-        return model.AIC == sum(model.EC[a,j,k] * model.CostCorr[a,j,k] for a in [1,2,3,4,5] for j in model.j for k in model.k) * model.IRCalc * 1.05 * 5.93
+        return model.AIC == sum(model.EC[a,j,k] * model.CostCorr[a,j,k] for a in [1,2,3,4,5] for j in model.j for k in model.k) * model.IRCalc 
     
     model.AIC_rule = Constraint(rule = AIC_rule)
     
@@ -512,7 +512,7 @@ def Superstructure_model(Superstructure):
     
     def RMC_rule(model):
         """Cost calculation for make up flows Q"""
-        return model.RMC == sum(model.Q[a,j,k,i] * model.CCost[i] for a in [1,2,3,4,5] for j in model.j for k in model.k for i in model.i)
+        return model.RMC == sum(model.Q[a,j,k,i] * model.CCost[i] for a in [1,2,3,4,5] for j in model.j for k in model.k for i in model.i)  + model.NeutPrice 
     
     model.RMC_rule = Constraint(rule = RMC_rule)
     
@@ -534,7 +534,7 @@ def Superstructure_model(Superstructure):
     
     def MTAC_rule(model):
         """Modified total annualized cost"""
-        return model.MTAC == model.AIC + model.OMC + model.WashingOC - model.BDP
+        return model.MTAC == model.AIC + model.OMC + model.WashingOC + model.RMC - model.BDP
     
     model.MTAC_rule = Constraint(rule = MTAC_rule)
     
@@ -636,7 +636,7 @@ def Superstructure_model(Superstructure):
     #Objective function
     def objective_rule(model):
         """Objective is to minimize cost (AIC)"""
-        return model.MTAC + model.GlycMTAC + model.ColdU + model.HotU + model.F0Cost + model.NeutPrice
+        return model.MTAC + model.GlycMTAC + model.ColdU + model.HotU + model.F0Cost
     
     
     #Minimize the AIC
