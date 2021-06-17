@@ -51,7 +51,7 @@ def Superstructure_model(Superstructure):
     model.CCost = Param(model.i, initialize = Superstructure.CCost_data, doc = 'Cost per kg for components used')
     model.UCost = Param(model.u, initialize = Superstructure.uCost_data, doc = 'Costs for utility usage')
     
-    model.FameSell = Param(initialize = 0.50, doc = 'biodiesel selling price')
+    model.FameSell = Param(initialize = 1.06, doc = 'biodiesel selling price')
     model.GlycWaste = Param(initialize = -0.015, doc = 'Cost for glycerol waste')
     model.GlycSell1 = Param(initialize = 0.17, doc = 'Selling upgraded glycerol 80%')
     model.GlycSell2 = Param(initialize = 0.895, doc = 'Selling upgraded glycerol 99%')
@@ -94,6 +94,8 @@ def Superstructure_model(Superstructure):
     model.GlycOMC = Var(bounds = (0, None), initialize= 0, doc = 'Operating and managment cost')
     model.GlycMTAC = Var(bounds = (None, None), initialize = 0, doc = 'Annual profit or not')
     model.GlycCost = Var(initialize = 0, doc = 'Profit or loss made from glyceol waste or byproduct')
+    model.NeutPrice = Var()
+
     
     model.IRCalc = Var(initialize = 0)
     model.WashingOC = Var(initialize = 0)
@@ -104,7 +106,7 @@ def Superstructure_model(Superstructure):
     model.CP = Param(model.i, initialize = Superstructure.CP_data)
     model.CPtot = Var(model.a, model.j)
     model.CP0 = Var()
-    model.S = Param(model.hi, initialize = {1:10, 2:30, 3:10, 4:25, 5:10})
+    model.S = Param(model.hi, initialize = {1:10, 2:60, 3:10, 4:25, 5:10})
     model.dH = Var(model.hi)
  
     model.F0Cost = Var(doc = 'Cost of ingoing feed')
@@ -112,15 +114,19 @@ def Superstructure_model(Superstructure):
     model.MeOHPrice = Param(initialize = 0.214, doc = 'price per kg of MeOH')
     model.NaOHPrice = Param(initialize = 0.24, doc = 'price per kg of NaOH')
     model.OilAmount = Param(initialize = 1050, doc = 'amount of oil feed to membrane system')
-    model.MeOHAmount= Param(initialize = 921, doc = 'amount of methanol to membrane system')
+    model.MeOHAmount= Param(initialize = 314, doc = 'amount of methanol to membrane system')
     model.NaOHAmount = Param(initialize = 5.25, doc = 'amount of NaOH to membrane system')
     
-    model.H3PO4Price = Param(initialize = 6.58, doc = 'price of H3PO4 in eur/h')
-    model.H2SO4Price = Param(initialize = 8.03, doc = 'price of H2So4 in eur/h')
-    model.HCLPrice = Param(initialize = 7.36, doc = 'price of HCL in eur/h')
-    model.NeutPrice = Var()
-    
 
+    
+    model.HotUPrice = Param(initialize = 35, doc = 'price of HP in $/MWh from paper of phillip')
+    model.ColdUPrice = Param(initialize = 0.27, doc = 'Price of CW in $/MWh from paper of phillip')
+    model.HotUCost = Var()
+    model.ColdUCost = Var()
+    
+    model.ECmemreactor = Param(initialize = 350000, doc =  'cost of membrane reactor in $')
+    model.MembraneReactorCost = Var()
+    
     
     
     
@@ -500,7 +506,7 @@ def Superstructure_model(Superstructure):
     
     def AIC_rule(model):
         """Annualized equipment costs using liftime and interest rates"""
-        return model.AIC == sum(model.EC[a,j,k] * model.CostCorr[a,j,k] for a in [1,2,3,4,5] for j in model.j for k in model.k) * model.IRCalc 
+        return model.AIC == sum(model.EC[a,j,k] * model.CostCorr[a,j,k] for a in [1,2,3,4,5] for j in model.j for k in model.k) * model.IRCalc + model.MembraneReactorCost
     
     model.AIC_rule = Constraint(rule = AIC_rule)
     
@@ -530,6 +536,10 @@ def Superstructure_model(Superstructure):
     model.WahsingOC_rule = Constraint(rule = WashingOC_rule)
     
     
+    def MembraneReactorCost_rule(model):
+        return model.MembraneReactorCost == model.ECmemreactor * model.IRCalc
+        
+    model.MembraneReactorCost_rule = Constraint(rule = MembraneReactorCost_rule)
     
     
     def MTAC_rule(model):
@@ -554,12 +564,24 @@ def Superstructure_model(Superstructure):
     model.Flow0cost_rule = Constraint(rule = Flow0cost_rule)
     
     
+    model.mwNaOH = Param(initialize = 0.04, doc = 'molar weight NaOH in kg/mol')
+    model.mwH3PO4 = Param(initialize = 0.098, doc = 'molar weight H3PO4 in kg/mol')
+    model.H3PO4Price = Param(initialize = 0.8, doc = 'price of H3PO4 in $/kg')
+    
+    model.mwH2SO4 = Param(initialize = 0.098, doc = 'molar weight H2SO4 in kg/mol')
+    model.H2SO4Price = Param(initialize = 0.65, doc = 'price of H2SO4 in $/kg')
+    
+    model.mwHCl = Param(initialize = 0.036, doc = 'molar weight HCl in kg/mol')
+    model.HClPrice = Param(initialize = 0.8, doc = 'price of HCl in $/kg')
+    
+    
+    
     
     
     def Neutralization_rule(model):
-        return model.NeutPrice == ( (model.y[2,1,1] + model.y[2,4,1] + model.y[3,2,1]) * model.H3PO4Price \
-        + (model.y[2,1,2] + model.y[2,4,2] + model.y[3,2,2]) * model.H2SO4Price \
-        + (model.y[2,1,3] + model.y[2,4,3] + model.y[3,2,3]) * model.HCLPrice ) * model.H 
+        return model.NeutPrice ==  (model.flow_in[2,1,1,4] + model.flow_in[2,4,1,4] + model.flow_in[3,2,1,4]) * (model.mwH3PO4 * model.H3PO4Price * model.H) / (model.mwNaOH * 3) \
+        + (model.flow_in[2,1,2,4] + model.flow_in[2,4,2,4] + model.flow_in[3,2,2,4]) * (model.mwH2SO4 * model.H2SO4Price * model.H) / (model.mwNaOH * 2) \
+        + (model.flow_in[2,1,3,4] + model.flow_in[2,4,3,4] + model.flow_in[3,2,3,4]) * (model.mwHCl * model.HClPrice * model.H) / (model.mwNaOH * 1) 
                            
     model.Neutralization_rule = Constraint(rule = Neutralization_rule)
     
@@ -633,10 +655,27 @@ def Superstructure_model(Superstructure):
     model.HotU_rule = Constraint(model.hi, rule = HotU_rule)
     model.ColdU_calc = Constraint(rule = ColdU_calc)
 
+    
+    def HotUCost_rule(model):
+        return model.HotUCost == model.HotU * (1/3600) * model.H * (1/1000) * model.HotUPrice
+    
+    def ColdUCost_rule(model):
+        return model.ColdUCost == model.ColdU * (1/3600) * model.H * (1/1000) * model.ColdUPrice
+    
+    model.HotUCost_rule = Constraint(rule = HotUCost_rule)
+    model.ColdUCost_rule = Constraint(rule = ColdUCost_rule)
+    
+    
+    
+    
+    
+    
+    
+
     #Objective function
     def objective_rule(model):
         """Objective is to minimize cost (AIC)"""
-        return model.MTAC + model.GlycMTAC + model.ColdU + model.HotU + model.F0Cost
+        return model.MTAC + model.GlycMTAC + model.HotUCost + model.ColdUCost + model.F0Cost
     
     
     #Minimize the AIC
@@ -666,6 +705,9 @@ def Superstructure_model(Superstructure):
       model.HX.display()
       model.F0Cost.display()
       model.NeutPrice.display()
+      model.HotUCost.display()
+      model.ColdUCost.display()
+      model.MembraneReactorCost.display()
       
     # This emulates what the pyomo command-line tools does
     from pyomo.opt import SolverFactory

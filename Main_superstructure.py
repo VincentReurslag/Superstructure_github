@@ -60,7 +60,7 @@ h_spacer = 10
 
 #Size of the data square for equpiment types that is colored
 h_size = 3
-v_size = 7
+v_size = 8
 
 #Defining colors so I can use them easier later on
 green = PatternFill(start_color="00FF00", end_color="00FF00", fill_type = "solid")
@@ -71,7 +71,7 @@ blue = PatternFill(start_color = "00A0FF", end_color = "00A0FF",  fill_type = "s
 cell = get_column_letter(start_col) + str(start_row + h_spacer)
 cell1 = get_column_letter(start_col+5) + str(start_row + h_spacer)
 sheet.merge_cells(cell + ':' + cell1)
-objective_value = (Superstructure.MTAC + Superstructure.GlycMTAC + Superstructure.HotU + Superstructure.ColdU + Superstructure.FeedCost) / 1000
+objective_value = (Superstructure.MTAC + Superstructure.GlycMTAC + Superstructure.HotUCost + Superstructure.ColdUCost + Superstructure.FeedCost) / 1000
 sheet[cell] = 'Objective function: %s' % objective_value
 sheet[cell].fill = blue
 
@@ -136,11 +136,14 @@ sheet[get_column_letter(start_col+4) + str(start_row + h_spacer + 10)] = 'Genera
 sheet[get_column_letter(start_col+4) + str(start_row + h_spacer + 11)] = 'Feed'
 sheet[get_column_letter(start_col+4) + str(start_row + h_spacer + 12)] = 'HotU'
 sheet[get_column_letter(start_col+4) + str(start_row + h_spacer + 13)] = 'ColdU'
+sheet[get_column_letter(start_col+4) + str(start_row + h_spacer + 14)] = 'Membrane Reac'
 
 sheet[get_column_letter(start_col+5) + str(start_row + h_spacer + 10)] = 'General costs'
-sheet[get_column_letter(start_col+5) + str(start_row + h_spacer + 11)] = Superstructure.FeedCost
-sheet[get_column_letter(start_col+5) + str(start_row + h_spacer + 12)] = Superstructure.HotU
-sheet[get_column_letter(start_col+5) + str(start_row + h_spacer + 13)] = Superstructure.ColdU
+sheet[get_column_letter(start_col+5) + str(start_row + h_spacer + 11)] = Superstructure.FeedCost / 1000
+sheet[get_column_letter(start_col+5) + str(start_row + h_spacer + 12)] = Superstructure.HotUCost / 1000
+sheet[get_column_letter(start_col+5) + str(start_row + h_spacer + 13)] = Superstructure.ColdUCost / 1000
+sheet[get_column_letter(start_col+5) + str(start_row + h_spacer + 14)] = Superstructure.MembraneReactorCost / 1000
+
 
 
 
@@ -163,32 +166,34 @@ for a in Superstructure.a:
             cell3 = get_column_letter(col[a - 1] + h_size) + str(start_row + v_size)
 
             #Merge and center the equipment name cell
-            if selected == 1:
+            if selected >= 0.5:
                 sheet.merge_cells(cell + ':' + cell1)
                 sheet[cell].alignment = Alignment(horizontal = 'center')
                 sheet[cell] = name + str( (a,j,k) )
                 
                 sheet[get_column_letter(col[a-1]) + str(start_row+1)] = 'Species i'
                 sheet[get_column_letter(col[a-1]+1) + str(start_row+1)] = 'Flow [kg/h]'
-                sheet[get_column_letter(col[a-1]) + str(start_row+2+len(Superstructure.i))] = 'Total'
-                sheet[get_column_letter(col[a-1]+1) + str(start_row+2+len(Superstructure.i))] = Superstructure.Flow_intot.loc[0,(a,j,k)]
+                sheet[get_column_letter(col[a-1]) + str(start_row+3+len(Superstructure.i))] = 'Total'
+                sheet[get_column_letter(col[a-1]+1) + str(start_row+3+len(Superstructure.i))] = Superstructure.Flow_intot.loc[0,(a,j,k)]
                 
                 sheet[get_column_letter(col[a-1]+2) + str(start_row + 1)] = 'Costs'
                 sheet[get_column_letter(col[a-1]+2) + str(start_row + 2)] = 'Ref cost'
-                sheet[get_column_letter(col[a-1]+2) + str(start_row + 3)] = 'E factor'
-                sheet[get_column_letter(col[a-1]+2) + str(start_row + 4)] = 'Ref IDX'
-                sheet[get_column_letter(col[a-1]+2) + str(start_row + 5)] = 'Cost corr'
-                sheet[get_column_letter(col[a-1]+2) + str(start_row + 6)] = 'Final cost'
-                sheet[get_column_letter(col[a-1]+2) + str(start_row + 7)] = 'AIC'
+                sheet[get_column_letter(col[a-1]+2) + str(start_row + 3)] = 'Ref size'
+                sheet[get_column_letter(col[a-1]+2) + str(start_row + 4)] = 'E factor'
+                sheet[get_column_letter(col[a-1]+2) + str(start_row + 5)] = 'Ref IDX'
+                sheet[get_column_letter(col[a-1]+2) + str(start_row + 6)] = 'Cost corr'
+                sheet[get_column_letter(col[a-1]+2) + str(start_row + 7)] = 'Final cost'
+                sheet[get_column_letter(col[a-1]+2) + str(start_row + 8)] = 'AIC'
                 
             
                 sheet[get_column_letter(col[a-1]+3) + str(start_row + 1)] = '1000[$]'
                 sheet[get_column_letter(col[a-1]+3) + str(start_row + 2)] = ref_cost / 1000
-                sheet[get_column_letter(col[a-1]+3) + str(start_row + 3)] = Sizing_data
-                sheet[get_column_letter(col[a-1]+3) + str(start_row + 4)] = Ref_index
-                sheet[get_column_letter(col[a-1]+3) + str(start_row + 5)] = CostCorr
-                sheet[get_column_letter(col[a-1]+3) + str(start_row + 6)] = real_cost / 1000
-                sheet[get_column_letter(col[a-1]+3) + str(start_row + 7)] = real_cost * Superstructure.IR_LF / 1000
+                sheet[get_column_letter(col[a-1]+3) + str(start_row + 3)] = Superstructure.RefSize_data[a,j,k]
+                sheet[get_column_letter(col[a-1]+3) + str(start_row + 4)] = Sizing_data
+                sheet[get_column_letter(col[a-1]+3) + str(start_row + 5)] = Ref_index
+                sheet[get_column_letter(col[a-1]+3) + str(start_row + 6)] = CostCorr
+                sheet[get_column_letter(col[a-1]+3) + str(start_row + 7)] = real_cost / 1000
+                sheet[get_column_letter(col[a-1]+3) + str(start_row + 8)] = real_cost * Superstructure.IR_LF / 1000
             
                 
                 

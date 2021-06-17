@@ -192,6 +192,7 @@ class Superstructure:
         self.FeedCost = value(model.F0Cost)
         self.HotU = value(model.HotU)
         self.ColdU = value(model.ColdU)
-        
-        
+        self.HotUCost = value(model.HotUCost)
+        self.ColdUCost = value(model.ColdUCost)
+        self.MembraneReactorCost = value(model.MembraneReactorCost)
 
