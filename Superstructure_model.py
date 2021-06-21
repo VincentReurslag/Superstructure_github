@@ -2,7 +2,7 @@
 """
 Created on Sun Mar 28 16:32:52 2021
 
-@author: Vincent Reurslag
+@author: Vincent Reurslag  
 """
 
 from pyomo.environ import *
@@ -512,7 +512,7 @@ def Superstructure_model(Superstructure):
     
     def TUC_rule(model):
         """Calculating total utility costs by multiplying usage with the price and summing everything up"""
-        return model.TUC == sum(model.Utility[a,j,k,u] * model.UCost[u] for a in [1,2,3,4,5] for j in model.j for k in model.k for u in model.u)
+        return model.TUC == sum(model.Utility[a,j,k,u]  * model.H * (1/1000) * model.UCost[u] for a in [1,2,3,4,5] for j in model.j for k in model.k for u in model.u)
     
     model.TUC_rule = Constraint(rule = TUC_rule)
     
@@ -544,7 +544,7 @@ def Superstructure_model(Superstructure):
     
     def MTAC_rule(model):
         """Modified total annualized cost"""
-        return model.MTAC == model.AIC + model.OMC + model.WashingOC + model.RMC - model.BDP
+        return model.MTAC == model.AIC + model.OMC + model.WashingOC + model.RMC + model.TUC - model.BDP
     
     model.MTAC_rule = Constraint(rule = MTAC_rule)
     
@@ -675,7 +675,7 @@ def Superstructure_model(Superstructure):
     #Objective function
     def objective_rule(model):
         """Objective is to minimize cost (AIC)"""
-        return model.MTAC + model.GlycMTAC + model.HotUCost + model.ColdUCost + model.F0Cost
+        return (model.MTAC + model.GlycMTAC + model.HotUCost + model.ColdUCost + model.F0Cost) 
     
     
     #Minimize the AIC
