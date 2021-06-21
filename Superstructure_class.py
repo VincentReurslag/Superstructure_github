@@ -196,3 +196,6 @@ class Superstructure:
         self.ColdUCost = value(model.ColdUCost)
         self.MembraneReactorCost = value(model.MembraneReactorCost)
 
+        self.ElectricityAmount = value(model.ElectricityAmount)
+        self.HeatingAmount = value(model.HeatingAmount)
+        self.CoolingAmount = value(model.CoolingAmount)

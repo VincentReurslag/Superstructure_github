@@ -127,6 +127,9 @@ def Superstructure_model(Superstructure):
     model.ECmemreactor = Param(initialize = 350000, doc =  'cost of membrane reactor in $')
     model.MembraneReactorCost = Var()
     
+    model.ElectricityAmount = Var()
+    model.HeatingAmount = Var()
+    model.CoolingAmount = Var()
     
     
     
@@ -134,7 +137,23 @@ def Superstructure_model(Superstructure):
     def utilities_rule(model, a, j, k, u):
         """Simply: Specific_utility_usage = Total_flow_in * Specific_utility_usage"""
         return model.Utility[a,j,k,u] == model.flow_intot[a,j,k] * model.Tau[a,j,k,u]
+    
 
+    def ElectricityAmount_rule(model):
+        return model.ElectricityAmount == sum(model.Utility[a,j,k,1] * model.H * (1/1000) * model.UCost[1] for a in model.a for j in model.j for k in model.k)
+    
+    model.ElectricityAmount_rule = Constraint(rule = ElectricityAmount_rule)
+    
+    def HeatingAmount_rule(model):
+        return model.HeatingAmount == sum(model.Utility[a,j,k,2] * model.H * (1/1000) * model.UCost[2] for a in model.a for j in model.j for k in model.k)
+    
+    model.HeatingAmount_rule = Constraint(rule = HeatingAmount_rule)
+    
+    def CoolingAmount_rule(model):
+        return model.CoolingAmount == sum(model.Utility[a,j,k,3] * model.H * (1/1000) * model.UCost[3] for a in model.a for j in model.j for k in model.k)
+    
+    model.CoolingAmount_rule = Constraint(rule = CoolingAmount_rule)
+    
 
     def dT_rule1(model,a):
         """Using dT = Temp_data[a] * y - Temp_[a-1] * y and taking the sum to find the temperatures"""

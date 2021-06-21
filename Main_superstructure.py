@@ -136,16 +136,23 @@ sheet[get_column_letter(start_col+4) + str(start_row + h_spacer + 10)] = 'Genera
 sheet[get_column_letter(start_col+4) + str(start_row + h_spacer + 11)] = 'Feed'
 sheet[get_column_letter(start_col+4) + str(start_row + h_spacer + 12)] = 'HotU'
 sheet[get_column_letter(start_col+4) + str(start_row + h_spacer + 13)] = 'ColdU'
-sheet[get_column_letter(start_col+4) + str(start_row + h_spacer + 14)] = 'Membrane Reac'
+
+sheet[get_column_letter(start_col+4) + str(start_row + h_spacer + 15)] = 'Additional info (already taken into account)'
+sheet[get_column_letter(start_col+4) + str(start_row + h_spacer + 16)] = 'Membrane Reac'
+sheet[get_column_letter(start_col+4) + str(start_row + h_spacer + 17)] = 'ElectricityC'
+sheet[get_column_letter(start_col+4) + str(start_row + h_spacer + 18)] = 'HeatingC'
+sheet[get_column_letter(start_col+4) + str(start_row + h_spacer + 19)] = 'CoolingC'
+
 
 sheet[get_column_letter(start_col+5) + str(start_row + h_spacer + 10)] = 'General costs'
 sheet[get_column_letter(start_col+5) + str(start_row + h_spacer + 11)] = Superstructure.FeedCost / 1000
 sheet[get_column_letter(start_col+5) + str(start_row + h_spacer + 12)] = Superstructure.HotUCost / 1000
 sheet[get_column_letter(start_col+5) + str(start_row + h_spacer + 13)] = Superstructure.ColdUCost / 1000
-sheet[get_column_letter(start_col+5) + str(start_row + h_spacer + 14)] = Superstructure.MembraneReactorCost / 1000
 
-
-
+sheet[get_column_letter(start_col+5) + str(start_row + h_spacer + 16)] = Superstructure.MembraneReactorCost / 1000
+sheet[get_column_letter(start_col+5) + str(start_row + h_spacer + 17)] = Superstructure.ElectricityAmount / 1000
+sheet[get_column_letter(start_col+5) + str(start_row + h_spacer + 18)] = Superstructure.HeatingAmount / 1000
+sheet[get_column_letter(start_col+5) + str(start_row + h_spacer + 19)] = Superstructure.CoolingAmount / 1000
 
 
 for a in Superstructure.a:
