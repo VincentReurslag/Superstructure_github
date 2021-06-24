@@ -51,7 +51,7 @@ def Superstructure_model(Superstructure):
     model.CCost = Param(model.i, initialize = Superstructure.CCost_data, doc = 'Cost per kg for components used')
     model.UCost = Param(model.u, initialize = Superstructure.uCost_data, doc = 'Costs for utility usage')
     
-    model.FameSell = Param(initialize = 1.06, doc = 'biodiesel selling price')
+    model.FameSell = Param(initialize = 1.5, doc = 'biodiesel selling price')
     model.GlycWaste = Param(initialize = -0.015, doc = 'Cost for glycerol waste')
     model.GlycSell1 = Param(initialize = 0.17, doc = 'Selling upgraded glycerol 80%')
     model.GlycSell2 = Param(initialize = 0.895, doc = 'Selling upgraded glycerol 99%')
@@ -110,7 +110,7 @@ def Superstructure_model(Superstructure):
     model.dH = Var(model.hi)
  
     model.F0Cost = Var(doc = 'Cost of ingoing feed')
-    model.OilPrice = Param(initialize = 0.768, doc = 'price per kg of oil')
+    model.OilPrice = Param(initialize = 1.1, doc = 'price per kg of oil')
     model.MeOHPrice = Param(initialize = 0.214, doc = 'price per kg of MeOH')
     model.NaOHPrice = Param(initialize = 0.24, doc = 'price per kg of NaOH')
     model.OilAmount = Param(initialize = 1050, doc = 'amount of oil feed to membrane system')
@@ -130,6 +130,8 @@ def Superstructure_model(Superstructure):
     model.ElectricityAmount = Var()
     model.HeatingAmount = Var()
     model.CoolingAmount = Var()
+    model.GlycNeutPrice = Var()
+
     
     
     
@@ -396,7 +398,7 @@ def Superstructure_model(Superstructure):
     
     def GlycRMC_rule(model):
         """Cost calculation for make up flows Q"""
-        return model.GlycRMC == sum(model.Q[a,j,k,i] * model.CCost[i] for a in [6,7,8] for j in model.j for k in model.k for i in model.i)
+        return model.GlycRMC == sum(model.Q[a,j,k,i] * model.CCost[i] for a in [6,7,8] for j in model.j for k in model.k for i in model.i) + model.GlycNeutPrice
     
     model.GlycRMC_rule = Constraint(rule = GlycRMC_rule)
     
@@ -559,6 +561,9 @@ def Superstructure_model(Superstructure):
         return model.MembraneReactorCost == model.ECmemreactor * model.IRCalc
         
     model.MembraneReactorCost_rule = Constraint(rule = MembraneReactorCost_rule)
+        
+
+    
     
     
     def MTAC_rule(model):
@@ -595,6 +600,11 @@ def Superstructure_model(Superstructure):
     
     
     
+    
+    def GlycNeutralization_rule(model):
+        return model.GlycNeutPrice == (model.flow_in[7,1,3,4] + model.flow_in[6,2,2,4])  * (model.mwH3PO4 * model.H3PO4Price * model.H) / (model.mwNaOH * 3)
+    
+    model.GlycNeutralization_rule = Constraint(rule = GlycNeutralization_rule)
     
     
     def Neutralization_rule(model):
