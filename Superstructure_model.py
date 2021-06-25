@@ -124,7 +124,7 @@ def Superstructure_model(Superstructure):
     model.HotUCost = Var()
     model.ColdUCost = Var()
     
-    model.ECmemreactor = Param(initialize = 350000, doc =  'cost of membrane reactor in $')
+    model.ECmemreactor = Param(initialize = 290000, doc =  'cost of membrane reactor in $')
     model.MembraneReactorCost = Var()
     
     model.ElectricityAmount = Var()
@@ -414,7 +414,7 @@ def Superstructure_model(Superstructure):
     model.GlycOMC_rule = Constraint(rule = GlycOMC_rule)
     
     def GlycMTAC_rule(model):
-        return model.GlycMTAC == model.GlycAIC + model.GlycOMC + model.GlycWashingOC - model.GlycCost
+        return model.GlycMTAC == model.GlycAIC + model.GlycOMC + model.GlycWashingOC
     
     model.GlycMTAC_rule = Constraint(rule = GlycMTAC_rule)
     
@@ -568,7 +568,7 @@ def Superstructure_model(Superstructure):
     
     def MTAC_rule(model):
         """Modified total annualized cost"""
-        return model.MTAC == model.AIC + model.OMC + model.WashingOC + model.RMC + model.TUC - model.BDP
+        return model.MTAC == model.AIC + model.OMC + model.WashingOC + model.RMC + model.TUC 
     
     model.MTAC_rule = Constraint(rule = MTAC_rule)
     
@@ -704,7 +704,7 @@ def Superstructure_model(Superstructure):
     #Objective function
     def objective_rule(model):
         """Objective is to minimize cost (AIC)"""
-        return (model.MTAC + model.GlycMTAC + model.HotUCost + model.ColdUCost + model.F0Cost) 
+        return (model.MTAC + model.GlycMTAC + model.HotUCost + model.ColdUCost + model.F0Cost) - model.BDP - model.GlycCost  
     
     
     #Minimize the AIC

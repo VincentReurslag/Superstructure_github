@@ -16,7 +16,7 @@ from pyomo.core import ConcreteModel, Set, NonNegativeReals, Var, value
 
 
 #xlsx_file is the input file with the data, output_file will be the result file
-xlsx_file = 'SS_dataV_AN.xlsx'
+xlsx_file = 'SS_dataV_ANGlyc.xlsx'
 output_file = 'ResultsV3.xlsx'
 
 a = [1,2,3,4,5,6,7,8]
@@ -71,7 +71,7 @@ blue = PatternFill(start_color = "00A0FF", end_color = "00A0FF",  fill_type = "s
 cell = get_column_letter(start_col) + str(start_row + h_spacer)
 cell1 = get_column_letter(start_col+5) + str(start_row + h_spacer)
 sheet.merge_cells(cell + ':' + cell1)
-objective_value = (Superstructure.MTAC + Superstructure.GlycMTAC + Superstructure.HotUCost + Superstructure.ColdUCost + Superstructure.FeedCost) / 1000
+objective_value = ( (Superstructure.MTAC + Superstructure.GlycMTAC + Superstructure.HotUCost + Superstructure.ColdUCost + Superstructure.FeedCost) - (Superstructure.GlycTAR + Superstructure.BDP) )/ 1000
 sheet[cell] = 'Objective function: %s' % objective_value
 sheet[cell].fill = blue
 
