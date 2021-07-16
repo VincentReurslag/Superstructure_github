@@ -167,13 +167,9 @@ def Superstructure_model(Superstructure):
 
 
      
-        
-    def HX_rule(model, a):
-        return model.HX[a] == model.dT[a] * sum(model.flow_instage[a,i] for i in model.i)
-    
+
   
     model.utilities_rule = Constraint(model.a, model.j, model.k, model.u, rule = utilities_rule)
-    model.HX_rule = Constraint(model.a, rule = HX_rule)
     model.dT_rule1 = Constraint(model.a, rule = dT_rule1)
 
     
@@ -644,6 +640,12 @@ def Superstructure_model(Superstructure):
     model.CPtot_rule1 = Constraint(model.a,model.j,rule = CPtot_rule1)
     model.CP0_rule1 = Constraint(rule = CP0_rule1)
     model.CP0_rule2 = Constraint(rule = CP0_rule2)
+
+
+    def HX_rule(model, a):
+        return model.HX[a] == model.dT[a] * sum(model.CPin[a,j] for j in model.j)
+
+    model.HX_rule = Constraint(model.a, rule = HX_rule)
 
 
     
