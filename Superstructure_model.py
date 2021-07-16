@@ -18,7 +18,7 @@ def Superstructure_model(Superstructure):
     model.k = Set(initialize = Superstructure.k, doc = 'AIChnology options')
     model.i = Set(initialize = Superstructure.i, doc = 'Species in reaction mixture')
     model.u = Set(initialize = Superstructure.u, doc = 'Utilities considered')
-    model.hi = Set(initialize = [1,2,3,4,5])
+    model.hi = Set(initialize = [1,2,3,4,5,6])
     
     
     #initialize parameters. The data comes from the created Superstructure class
@@ -36,8 +36,8 @@ def Superstructure_model(Superstructure):
     
     
     model.M = Param(initialize = 1e5, doc = 'M parameter to apply big M formuylation')
-    model.lb = Param(initialize = 500, doc = 'Lower flow bound in main superstructure to approximate exponential function')
-    model.ub = Param(initialize = 1000, doc = 'upper blow bound in main superstructure to approximate exponential function')
+    model.lb = Param(initialize = 1000, doc = 'Lower flow bound in main superstructure to approximate exponential function')
+    model.ub = Param(initialize = 1500, doc = 'upper blow bound in main superstructure to approximate exponential function')
     model.lbGlyc = Param(initialize = 50, doc = 'Lower flow bound in Glycerol superstructure')
     model.ubGlyc = Param(initialize = 150, doc = 'Upper flow bound in glycerol superstrucuture')
     model.T0 = Param(initialize = 60, doc = 'Starting temperature of incoming flow from the reactor')
@@ -106,7 +106,7 @@ def Superstructure_model(Superstructure):
     model.CP = Param(model.i, initialize = Superstructure.CP_data)
     model.CPtot = Var(model.a, model.j)
     model.CP0 = Var()
-    model.S = Param(model.hi, initialize = {1:10, 2:60, 3:10, 4:25, 5:10})
+    model.S = Param(model.hi, initialize = {1:10, 2:275, 3:10, 4:60, 5:35, 6:10})
     model.dH = Var(model.hi)
  
     model.F0Cost = Var(doc = 'Cost of ingoing feed')
@@ -115,7 +115,7 @@ def Superstructure_model(Superstructure):
     model.NaOHPrice = Param(initialize = 0.24, doc = 'price per kg of NaOH')
     model.OilAmount = Param(initialize = 1050, doc = 'amount of oil feed to membrane system')
     model.MeOHAmount= Param(initialize = 314, doc = 'amount of methanol to membrane system')
-    model.NaOHAmount = Param(initialize = 5.25, doc = 'amount of NaOH to membrane system')
+    model.NaOHAmount = Param(initialize = 10, doc = 'amount of NaOH to membrane system')
     
 
     
@@ -124,7 +124,7 @@ def Superstructure_model(Superstructure):
     model.HotUCost = Var()
     model.ColdUCost = Var()
     
-    model.ECmemreactor = Param(initialize = 350000, doc =  'cost of membrane reactor in $')
+    model.ECmemreactor = Param(initialize = 447000, doc =  'cost of membrane reactor in $')
     model.MembraneReactorCost = Var()
     
     model.ElectricityAmount = Var()
@@ -649,37 +649,40 @@ def Superstructure_model(Superstructure):
     
     def dH1_rule(model):
         """What streams belong to the first temperature inteval"""
-        return model.dH[1] == model.S[1] * (-model.CP0_2 - model.CPin[2,2] - model.CPtot[3,1] - model.CPtot[4,2] - model.CPtot[4,3])
+        return model.dH[1] == model.S[1] * (-model.CPtot[3,1] - model.CPtot[4,2] - model.CPtot[4,3])
     
     def dH2_rule(model):
         """What streams belong to the second temperature inteval"""
-        return model.dH[2] == model.dH[1] +  model.S[2] * (-model.CP0_2 - model.CPin[2,2] + model.CPin[2,3] + model.CPin[2,4]  + model.CPtot[2,2] - model.CPtot[3,1]  + model.CPtot[4,1] - model.CPtot[4,2] - model.CPtot[4,3] + model.CPtot[5,1])
+        return model.dH[2] == model.dH[1] +  model.S[2] * (-model.CPtot[3,1] - model.CPtot[4,2] - model.CPtot[4,3] + model.CPtot[4,1] + model.CPtot[5,1])
     
     def dH3_rule(model):
         """What streams belong to the second temperature inteval"""
-        return model.dH[3] == model.dH[2] +  model.S[3] * (-model.CPin[2,2] + model.CPin[2,3] + model.CPin[2,4] - model.CPtot[2,1] + model.CPtot[2,2] - model.CPtot[2,4] - model.CPtot[3,2] + model.CPtot[4,1] + model.CPtot[5,1])
+        return model.dH[3] == model.dH[2] +  model.S[3] * (-model.CPtot[3,1] - model.CPtot[4,2] - model.CPtot[4,3] + model.CPtot[4,1] + model.CPtot[5,1] - model.CP0_2 - model.CPin[2,2] )
     
     def dH4_rule(model):
         """What streams belong to the third temperature inteval"""
-        return model.dH[4] == model.dH[3] +  model.S[4] * (model.CP0_1 - model.CPin[2,2] + model.CPin[2,3] + model.CPin[2,4] - model.CPtot[2,1] + model.CPtot[2,2] - model.CPtot[2,4] - model.CPtot[3,2] + model.CPtot[4,1] + model.CPtot[5,1])
+        return model.dH[4] == model.dH[3] +  model.S[4] * (-model.CPtot[3,1] - model.CPtot[4,2] - model.CPtot[4,3] + model.CPtot[4,1] + model.CPtot[5,1] - model.CP0_2 + model.CPtot[1,2] - model.CPin[2,2] + model.CPtot[2,2])
     
     def dH5_rule(model):
         """What streams belong to the fourth temperature inteval"""
-        return model.dH[5] == model.dH[4] +  model.S[5] * (model.CP0_1 + model.CPin[2,3] + model.CPin[2,4] + model.CPtot[2,2] + model.CPtot[4,1] + model.CPtot[5,1])
+        return model.dH[5] == model.dH[4] +  model.S[5] * (model.CP0_1 - model.CPin[2,2] + model.CPtot[1,2] - model.CPtot[2,1] + model.CPtot[2,2] - model.CPtot[2,4] - model.CPtot[3,2] + model.CPtot[4,1] + model.CPtot[5,1])
     
+    def dH6_rule(model):
+        """What streams belong to the fourth temperature inteval"""
+        return model.dH[6] == model.dH[5] +  model.S[6] * (model.CP0_1 + model.CPtot[1,2] + model.CPtot[2,2] + model.CPtot[4,1] + model.CPtot[5,1])
     
     model.dH1_rule = Constraint(rule = dH1_rule)
     model.dH2_rule = Constraint(rule = dH2_rule)
     model.dH3_rule = Constraint(rule = dH3_rule)
     model.dH4_rule = Constraint(rule = dH4_rule)
     model.dH5_rule = Constraint(rule = dH5_rule)
-
+    model.dH6_rule = Constraint(rule = dH6_rule)
     
     def HotU_rule(model,hi):
         return model.dH[hi] + model.HotU >= 0
 
     def ColdU_calc(model):
-        return model.ColdU == model.dH[5] + model.HotU
+        return model.ColdU == model.dH[6] + model.HotU
     
     model.HotU_rule = Constraint(model.hi, rule = HotU_rule)
     model.ColdU_calc = Constraint(rule = ColdU_calc)
