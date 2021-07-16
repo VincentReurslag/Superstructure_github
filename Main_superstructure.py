@@ -16,7 +16,7 @@ from pyomo.core import ConcreteModel, Set, NonNegativeReals, Var, value
 
 
 #xlsx_file is the input file with the data, output_file will be the result file
-xlsx_file = 'SS_dataV_ANGlyc.xlsx'
+xlsx_file = 'SS_dataV_AN.xlsx'
 output_file = 'ResultsV3.xlsx'
 
 a = [1,2,3,4,5,6,7,8]

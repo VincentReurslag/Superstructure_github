@@ -58,9 +58,9 @@ def Superstructure_model(Superstructure):
     model.GlycSell3 = Param(initialize = 1.275, doc = 'Selling upgraded glycerol 99.9%')
     
     
-    model.WaterWashingOC = Param(initialize = 0.021, doc = 'Water washing cost in $/l including waste disposal')
-    model.MagnesolWashOC = Param(initialize = 0.032, doc = 'Magnesol washing cost in $/l including filtering')
-    model.IonExchangeOC = Param(initialize = 0.026, doc = 'Ion exchange washing cost in $/l for resins')
+    model.WaterWashingOC = Param(initialize = 0.024, doc = 'Water washing cost in $/kg including waste disposal')
+    model.MagnesolWashOC = Param(initialize = 0.036, doc = 'Magnesol washing cost in $/kg including filtering')
+    model.IonExchangeOC = Param(initialize = 0.030, doc = 'Ion exchange washing cost in $/kg for resins')
     model.FameDensity = Param(initialize = 0.8747, doc = 'Biodiesel density in kg/l')
     model.GlycDensity = Param(initialize = 1.26, doc = 'Glycerol density in kg/l')
     
@@ -124,7 +124,7 @@ def Superstructure_model(Superstructure):
     model.HotUCost = Var()
     model.ColdUCost = Var()
     
-    model.ECmemreactor = Param(initialize = 290000, doc =  'cost of membrane reactor in $')
+    model.ECmemreactor = Param(initialize = 350000, doc =  'cost of membrane reactor in $')
     model.MembraneReactorCost = Var()
     
     model.ElectricityAmount = Var()
@@ -392,7 +392,7 @@ def Superstructure_model(Superstructure):
     
     def GlycTUC_rule(model):
         """Calculating total utility costs by multiplying usage with the price and summing everything up"""
-        return model.GlycTUC == sum(model.Utility[a,j,k,u] * model.UCost[u] for a in [6,7,8] for j in model.j for k in model.k for u in model.u)
+        return model.GlycTUC == sum(model.Utility[a,j,k,u] * model.H * (1/1000) * model.UCost[u] for a in [6,7,8] for j in model.j for k in model.k for u in model.u)
     
     model.GlycTUC_rule = Constraint(rule = GlycTUC_rule)
     
@@ -550,9 +550,9 @@ def Superstructure_model(Superstructure):
     model.OMC_rule = Constraint(rule = OMC_rule)
     
     def WashingOC_rule(model):
-        return model.WashingOC == ( (model.flow_intot[3,1,1] + model.flow_intot[4,3,1] + model.flow_intot[4,2,1] + model.flow_intot[4,3,1]) * model.FameDensity * model.WaterWashingOC + \
-           (model.flow_intot[3,1,2] + model.flow_intot[4,2,2]) * model.FameDensity * model.MagnesolWashOC + \
-           (model.flow_intot[3,1,3] + model.flow_intot[4,2,3]) * model.FameDensity * model.IonExchangeOC) * model.H
+        return model.WashingOC == ( (model.flow_intot[3,1,1] + model.flow_intot[4,3,1] + model.flow_intot[4,2,1] + model.flow_intot[4,3,1]) * model.WaterWashingOC + \
+           (model.flow_intot[3,1,2] + model.flow_intot[4,2,2]) * model.MagnesolWashOC + \
+           (model.flow_intot[3,1,3] + model.flow_intot[4,2,3]) * model.IonExchangeOC) * model.H
                
     model.WahsingOC_rule = Constraint(rule = WashingOC_rule)
     
