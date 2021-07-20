@@ -353,12 +353,16 @@ def Superstructure_model(Superstructure):
 
     
     
-    
-    def logic_glyc11(model):
-        return 2 * model.y[6,3,1] - model.y[7,3,1] - model.y[8,3,1] == 0
-    
+
     def logic_glyc12(model):
-        return 2 * model.y[6,3,2] - model.y[7,3,2] - model.y[8,3,2] == 0
+        return model.y[6,3,2] - model.y[7,3,2] - model.y[7,3,1] == 0
+    
+    def logic_glyc13(model):
+        return model.y[7,3,1] - model.y[8,3,1] == 0
+    
+    def logic_glyc14(model):
+        return model.y[7,3,2] - model.y[8,3,2] == 0
+    
     
     model.logic_glyc_rule3 = Constraint(rule = logic_glyc3)
     model.logic_glyc_rule4 = Constraint(rule = logic_glyc4)
@@ -368,8 +372,9 @@ def Superstructure_model(Superstructure):
     model.logic_glyc_rule8 = Constraint(rule = logic_glyc8)
     model.logic_glyc_rule9 = Constraint(rule = logic_glyc9)
 
-    model.logic_glyc_rule11 = Constraint(rule = logic_glyc11)
     model.logic_glyc_rule12 = Constraint(rule = logic_glyc12)
+    model.logic_glyc_rule13 = Constraint(rule = logic_glyc13)
+    model.logic_glyc_rule14 = Constraint(rule = logic_glyc14)
 
     
     def GlycCost_rule(model):
