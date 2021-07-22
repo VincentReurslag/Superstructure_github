@@ -113,7 +113,7 @@ def Superstructure_model(Superstructure):
     model.OilPrice = Param(initialize = 1.1, doc = 'price per kg of oil')
     model.MeOHPrice = Param(initialize = 0.214, doc = 'price per kg of MeOH')
     model.NaOHPrice = Param(initialize = 0.24, doc = 'price per kg of NaOH')
-    model.OilAmount = Param(initialize = 1050, doc = 'amount of oil feed to membrane system')
+    model.OilAmount = Param(initialize = 1050 , doc = 'amount of oil feed to membrane system')
     model.MeOHAmount= Param(initialize = 314, doc = 'amount of methanol to membrane system')
     model.NaOHAmount = Param(initialize = 10, doc = 'amount of NaOH to membrane system')
     
